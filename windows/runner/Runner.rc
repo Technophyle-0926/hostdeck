@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "hostdeck" "\0"
+            VALUE "CompanyName", "Meet Vishavadia" "\0"
+            VALUE "FileDescription", "HostDeck" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "hostdeck" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "hostdeck.exe" "\0"
-            VALUE "ProductName", "hostdeck" "\0"
+            VALUE "InternalName", "HostDeck" "\0"
+            VALUE "LegalCopyright", "Copyright ©️ 2026 Meet Vishavadia. All rights reserved." "\0"
+            VALUE "OriginalFilename", "HostDeck-win32.exe" "\0"
+            VALUE "ProductName", "HostDeck" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

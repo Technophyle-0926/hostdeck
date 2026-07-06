@@ -1,0 +1,32 @@
+package_rename_config:
+  android:
+    app_name: HostDeck
+    package_name: dev.meetvishavadia.hostdeck
+    override_old_package: com.example.hostdeck
+    lang: kotlin
+
+  ios:
+    app_name: HostDeck
+    bundle_name: hostdeck
+    override_old_package: com.example.hostdeck
+    package_name: dev.meetvishavadia.hostdeck
+
+  web:
+    app_name: HostDeck
+    description: Manage and monitor multiple AppHost accounts seamlessly with HostDeck
+
+  linux:
+    app_name: HostDeck
+    package_name: dev.meetvishavadia.hostdeck
+    exe_name: HostDeck-linux-x64
+
+  windows:
+    app_name: HostDeck
+    organization: Meet Vishavadia
+    copyright_notice: Copyright ©️ 2026 Meet Vishavadia. All rights reserved.
+    exe_name: HostDeck-win32
+
+  macos:
+    app_name: HostDeck
+    package_name: dev.meetvishavadia.hostdeck
+    copyright_notice: Copyright ©️ 2026 Meet Vishavadia. All rights reserved.

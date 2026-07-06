@@ -1,5 +1,4 @@
 import 'package:isar/isar.dart';
-import 'package:flutter/foundation.dart';
 import '../../domain/entities/aggregated_build.dart';
 
 part 'aggregated_build_model.g.dart';

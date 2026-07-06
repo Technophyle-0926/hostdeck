@@ -1,4 +1,4 @@
-package com.example.hostdeck
+package dev.meetvishavadia.hostdeck
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

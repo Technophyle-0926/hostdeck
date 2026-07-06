@@ -1,11 +1,11 @@
 {
-    "name": "hostdeck",
-    "short_name": "hostdeck",
+    "name": "HostDeck",
+    "short_name": "HostDeck",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Manage and monitor multiple AppHost accounts seamlessly with HostDeck",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

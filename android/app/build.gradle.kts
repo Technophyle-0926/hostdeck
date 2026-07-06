@@ -6,9 +6,19 @@ plugins {
 }
 
 android {
+    val localProperties = java.util.Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { localProperties.load(it) }
+    }
+    val localCompileSdk = localProperties.getProperty("flutter.compileSdkVersion")?.toInt() ?: flutter.compileSdkVersion
+    val localMinSdk = localProperties.getProperty("flutter.minSdkVersion")?.toInt() ?: flutter.minSdkVersion
+    val localTargetSdk = localProperties.getProperty("flutter.targetSdkVersion")?.toInt() ?: flutter.targetSdkVersion
+    val localNdkVersion = localProperties.getProperty("flutter.ndkVersion") ?: flutter.ndkVersion
+
     namespace = "dev.meetvishavadia.hostdeck"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = localCompileSdk
+    ndkVersion = localNdkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -24,8 +34,8 @@ android {
         applicationId = "dev.meetvishavadia.hostdeck"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = localMinSdk
+        targetSdk = localTargetSdk
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

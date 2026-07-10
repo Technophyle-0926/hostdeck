@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hostdeck/core/constants/app_enums.dart';
+import 'package:hostdeck/core/constants/app_strings.dart';
 import '../controllers/dashboard_controller.dart';
 
 class FilterBottomSheet {
@@ -22,7 +23,7 @@ class FilterBottomSheet {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Filters',
+                  AppStrings.filters,
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 TextButton(
@@ -31,7 +32,7 @@ class FilterBottomSheet {
                     localAccounts.clear();
                   },
                   child: const Text(
-                    'Clear All',
+                    AppStrings.clearAll,
                     style: TextStyle(color: Colors.red),
                   ),
                 ),
@@ -39,7 +40,7 @@ class FilterBottomSheet {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Platform',
+              AppStrings.platform,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
@@ -64,7 +65,7 @@ class FilterBottomSheet {
             ),
             const SizedBox(height: 24),
             const Text(
-              'Accounts',
+              AppStrings.accounts,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
@@ -98,7 +99,7 @@ class FilterBottomSheet {
                   controller.selectedHostAccounts.assignAll(localAccounts);
                   Get.back();
                 },
-                child: const Text('Apply'),
+                child: const Text(AppStrings.apply),
               ),
             ),
           ],

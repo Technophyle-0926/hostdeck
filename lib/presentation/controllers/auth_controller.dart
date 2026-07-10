@@ -6,6 +6,7 @@ import 'package:hostdeck/data/datasources/local/secure_storage_service.dart';
 import 'package:hostdeck/data/datasources/remote/firestore_sync_service.dart';
 import 'package:hostdeck/data/datasources/remote/google_auth_service.dart';
 import 'package:hostdeck/routes/app_pages.dart';
+import 'package:hostdeck/core/constants/app_strings.dart';
 
 class AuthController extends GetxController {
   final GoogleAuthService _googleAuthService = GoogleAuthService();
@@ -40,8 +41,8 @@ class AuthController extends GetxController {
       await Get.find<DatabaseService>().saveHostAccounts(remoteAccounts);
     } else {
       Get.snackbar(
-        'Sign-in Cancelled',
-        'Could not complete Google Sign-In.',
+        AppStrings.signInCancelled,
+        AppStrings.signInCancelledDesc,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
         colorText: Colors.red,

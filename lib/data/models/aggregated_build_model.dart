@@ -1,5 +1,6 @@
 import 'package:isar/isar.dart';
 import '../../domain/entities/aggregated_build.dart';
+import '../../core/constants/app_keys.dart';
 
 part 'aggregated_build_model.g.dart';
 
@@ -36,45 +37,45 @@ class AggregatedBuildModel {
   }
 
   factory AggregatedBuildModel.fromFirestoreJson(Map<String, dynamic> json, int hostAccountId, String appName, [String appDownloadUrl = '', String appIconUrl = '']) {
-    final fields = json['fields'] ?? {};
+    final fields = json[AppKeys.fields] ?? {};
     
     // Helper to safely extract values
     String extractString(String key) {
-      return fields[key]?['stringValue'] ?? '';
+      return fields[key]?[AppKeys.stringValue] ?? '';
     }
     
     double extractDouble(String key) {
       final field = fields[key];
       if (field == null) return 0.0;
-      if (field.containsKey('doubleValue')) return (field['doubleValue'] as num).toDouble();
-      if (field.containsKey('integerValue')) {
-        return double.tryParse(field['integerValue'].toString()) ?? 0.0;
+      if (field.containsKey(AppKeys.doubleValue)) return (field[AppKeys.doubleValue] as num).toDouble();
+      if (field.containsKey(AppKeys.integerValue)) {
+        return double.tryParse(field[AppKeys.integerValue].toString()) ?? 0.0;
       }
-      if (field.containsKey('stringValue')) {
-        return double.tryParse(field['stringValue'].toString()) ?? 0.0;
+      if (field.containsKey(AppKeys.stringValue)) {
+        return double.tryParse(field[AppKeys.stringValue].toString()) ?? 0.0;
       }
       return 0.0;
     }
 
     // Convert size to MB (it comes in bytes as a string like "24836897")
-    double sizeInBytes = extractDouble('size');
+    double sizeInBytes = extractDouble(AppKeys.size);
     double sizeInMb = sizeInBytes > 0 ? sizeInBytes / (1024 * 1024) : 0.0;
 
     return AggregatedBuildModel()
       ..hostAccountId = hostAccountId
       ..projectName = appName
-      ..version = extractString('version')
-      ..environment = extractString('ios_distribution_type').isEmpty 
+      ..version = extractString(AppKeys.version)
+      ..environment = extractString(AppKeys.iosDistributionType).isEmpty 
           ? 'Prod' 
-          : extractString('ios_distribution_type')
-      ..uploadDate = DateTime.tryParse(json['createTime'] ?? json['updateTime'] ?? '') ?? DateTime.now()
+          : extractString(AppKeys.iosDistributionType)
+      ..uploadDate = DateTime.tryParse(json[AppKeys.createTime] ?? json[AppKeys.updateTime] ?? '') ?? DateTime.now()
       ..sizeMb = sizeInMb
-      ..platform = extractString('platform')
-      ..downloadUrl = extractString('cached_share_key').isNotEmpty 
-          ? 'https://appho.st/d/${extractString('cached_share_key')}'
+      ..platform = extractString(AppKeys.platform)
+      ..downloadUrl = extractString(AppKeys.cachedShareKey).isNotEmpty 
+          ? 'https://appho.st/d/${extractString(AppKeys.cachedShareKey)}'
           : appDownloadUrl
-      ..appIconUrl = extractString('logo_url').isNotEmpty 
-    ? extractString('logo_url') 
+      ..appIconUrl = extractString(AppKeys.logoUrl).isNotEmpty 
+    ? extractString(AppKeys.logoUrl) 
     : appIconUrl;
   }
 

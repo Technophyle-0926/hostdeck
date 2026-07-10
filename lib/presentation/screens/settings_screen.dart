@@ -13,12 +13,12 @@ class SettingsScreen extends GetView<SettingsController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(AppStrings.settingsTitle, style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.redAccent),
-            tooltip: 'Log Out',
+            tooltip: AppStrings.logOut,
             onPressed: () => Get.find<AuthController>().signOut(),
           ),
           const SizedBox(width: 8),
@@ -27,7 +27,7 @@ class SettingsScreen extends GetView<SettingsController> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => AddAccountSheet.show(context, controller),
         icon: const Icon(Icons.add),
-        label: const Text('Add Account'),
+        label: const Text(AppStrings.addAccount),
         backgroundColor: const Color(0xFF2563EB),
         foregroundColor: Colors.white,
       ),
@@ -40,14 +40,14 @@ class SettingsScreen extends GetView<SettingsController> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Preferences',
+                    AppStrings.preferences,
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   _buildThemeSection(context),
                   const SizedBox(height: 32),
                   const Text(
-                    'Manage Accounts',
+                    AppStrings.manageAccounts,
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -165,7 +165,7 @@ class SettingsScreen extends GetView<SettingsController> {
               Get.back();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Remove'),
+            child: const Text(AppStrings.remove),
           ),
         ],
       ),

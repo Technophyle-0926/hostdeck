@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hostdeck/core/constants/app_strings.dart';
 import 'package:hostdeck/presentation/controllers/auth_controller.dart';
 import 'package:sign_in_button/sign_in_button.dart';
 
@@ -19,13 +20,13 @@ class LoginScreen extends GetView<AuthController> {
             ),
             const SizedBox(height: 24),
             const Text(
-              'Welcome to HostDeck',
+              AppStrings.welcomeTitle,
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 48),
             SignInButton(
               Buttons.google,
-              text: 'Sign in with Google',
+              text: AppStrings.signInWithGoogle,
               onPressed: () => controller.signInWithGoogle(),
             ),
           ],

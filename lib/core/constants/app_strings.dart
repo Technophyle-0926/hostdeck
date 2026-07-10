@@ -22,6 +22,8 @@ class AppStrings {
   static const String addAccount = 'Add Account';
   static const String noAccountsFound = 'No accounts added yet.';
   
+  static const String preferences = 'Preferences';
+  
   // Add Account Form
   static const String accountName = 'Account Name';
   static const String email = 'Email';
@@ -46,8 +48,27 @@ class AppStrings {
   static const String deleteAccount = 'Delete Account';
   static const String deleteAccountConfirm = 'Are you sure you want to delete this account?';
   static const String delete = 'Delete';
+  static const String remove = 'Remove';
 
   // Build Environments
   static const String envProd = 'Prod';
   static const String envStage = 'Stage';
+
+  // Filters
+  static const String filters = 'Filters';
+  static const String clearAll = 'Clear All';
+  static const String platform = 'Platform';
+  static const String accounts = 'Accounts';
+  static const String apply = 'Apply';
+  static const String searchHint = 'Search builds or versions...';
+
+  // Auth & Login
+  static const String signInWithGoogle = 'Sign in with Google';
+  static const String signInCancelled = 'Sign-in Cancelled';
+  static const String signInCancelledDesc = 'Could not complete Google Sign-In.';
+  static const String logOut = 'Log Out';
+  
+  // Settings & Accounts
+  static const String accountExists = 'An account with this email already exists.';
+  static const String authFailed = 'Authentication Failed';
 }

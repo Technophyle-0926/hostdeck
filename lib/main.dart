@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:hostdeck/core/constants/app_constants.dart';
+import 'package:hostdeck/core/constants/app_strings.dart';
 import 'package:hostdeck/data/datasources/remote/firestore_sync_service.dart';
 import 'package:hostdeck/firebase_options.dart';
 import 'package:hostdeck/presentation/controllers/auth_controller.dart';
@@ -18,12 +20,12 @@ import 'data/repositories/auth_repository_impl.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await GoogleSignIn.instance.initialize(
-    serverClientId: '45495419491-fs2t97f67btetgf52q8aphkab0a9i1qd.apps.googleusercontent.com'
+    serverClientId: AppConstants.serverClientId,
   );
 
   // Initialize Global Services
@@ -53,7 +55,7 @@ class HostDeckApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'HostDeck',
+      title: AppStrings.appName,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode:

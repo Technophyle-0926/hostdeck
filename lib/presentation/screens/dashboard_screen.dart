@@ -504,7 +504,7 @@ class DashboardScreen extends GetView<DashboardController> {
                   controller.searchFocusNode.value.unfocus(),
               onChanged: (value) => controller.searchQuery.value = value,
               decoration: InputDecoration(
-                hintText: 'Search builds or versions...',
+                hintText: AppStrings.searchHint,
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),

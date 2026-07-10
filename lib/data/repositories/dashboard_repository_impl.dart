@@ -105,7 +105,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
               final appName = fields['name']?['stringValue'] ?? 'Unknown App';
               final appShareKey = fields['cached_share_key']?['stringValue'] ?? '';
               final appDownloadUrl = appShareKey.isNotEmpty ? 'https://appho.st/d/$appShareKey' : '';
-              final appIconUrl = fields['icon_url']?['stringValue'] ?? '';
+              final appIconUrl = fields['logo_url']?['stringValue'] ?? '';
               
               final fileDocs = await _apiClient.fetchFilesForApp(localId, appId, idToken);
               

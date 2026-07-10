@@ -67,13 +67,15 @@ class AggregatedBuildModel {
       ..environment = extractString('ios_distribution_type').isEmpty 
           ? 'Prod' 
           : extractString('ios_distribution_type')
-      ..uploadDate = DateTime.tryParse(json['updateTime'] ?? json['createTime'] ?? '') ?? DateTime.now()
+      ..uploadDate = DateTime.tryParse(json['createTime'] ?? json['updateTime'] ?? '') ?? DateTime.now()
       ..sizeMb = sizeInMb
       ..platform = extractString('platform')
       ..downloadUrl = extractString('cached_share_key').isNotEmpty 
           ? 'https://appho.st/d/${extractString('cached_share_key')}'
           : appDownloadUrl
-      ..appIconUrl = appIconUrl;
+      ..appIconUrl = extractString('logo_url').isNotEmpty 
+    ? extractString('logo_url') 
+    : appIconUrl;
   }
 
   AggregatedBuild toEntity() {

@@ -544,7 +544,11 @@ class _BuildHistoryTabsState extends State<_BuildHistoryTabs>
             ),
           )
         else
-          ...activeBuilds.map((oldBuild) {
+          ...activeBuilds.asMap().entries.map((entry) {
+            final index = entry.key;
+            final oldBuild = entry.value;
+            final isActive = index == 0;
+
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -571,6 +575,28 @@ class _BuildHistoryTabsState extends State<_BuildHistoryTabs>
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isActive 
+                                    ? Colors.green.withValues(alpha: 0.1) 
+                                    : Colors.grey.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: isActive 
+                                      ? Colors.green.withValues(alpha: 0.5) 
+                                      : Colors.grey.withValues(alpha: 0.5),
+                                ),
+                              ),
+                              child: Text(
+                                isActive ? 'Active' : 'Inactive',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isActive ? Colors.green : Colors.grey,
                                 ),
                               ),
                             ),

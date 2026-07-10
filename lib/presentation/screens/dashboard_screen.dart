@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hostdeck/presentation/widgets/filter_bottom_sheet.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/constants/app_enums.dart';
 import '../../core/utils/date_utils.dart';
@@ -57,6 +58,7 @@ class DashboardScreen extends GetView<DashboardController> {
                 padding: const EdgeInsets.all(16.0),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
+                    _buildSearchBar(context),
                     _buildWarningBanner(customTheme),
                     const SizedBox(height: 16),
                     _buildAccountOverviews(customTheme),
@@ -239,9 +241,16 @@ class DashboardScreen extends GetView<DashboardController> {
             )
             .toList();
 
-        final androidVersion = androidBuilds.isNotEmpty ? 'Android v${androidBuilds.first.version}' : '';
-        final iosVersion = iosBuilds.isNotEmpty ? 'iOS v${iosBuilds.first.version}' : '';
-        final versionText = [androidVersion, iosVersion].where((v) => v.isNotEmpty).join('\n');
+        final androidVersion = androidBuilds.isNotEmpty
+            ? 'Android v${androidBuilds.first.version}'
+            : '';
+        final iosVersion = iosBuilds.isNotEmpty
+            ? 'iOS v${iosBuilds.first.version}'
+            : '';
+        final versionText = [
+          androidVersion,
+          iosVersion,
+        ].where((v) => v.isNotEmpty).join('\n');
 
         Widget appIcon;
         if (latestBuild.appIconUrl.isNotEmpty) {
@@ -361,6 +370,12 @@ class DashboardScreen extends GetView<DashboardController> {
           ],
         );
 
+        int tabIndex = 0;
+        if (controller.selectedPlatforms.length == 1 &&
+            controller.selectedPlatforms.first == BuildPlatform.ios) {
+          tabIndex = 1;
+        }
+
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: Theme(
@@ -375,6 +390,7 @@ class DashboardScreen extends GetView<DashboardController> {
                 _BuildHistoryTabs(
                   androidBuilds: androidBuilds,
                   iosBuilds: iosBuilds,
+                  initialIndex: tabIndex,
                 ),
               ],
             ),
@@ -406,10 +422,6 @@ class DashboardScreen extends GetView<DashboardController> {
 
   void _handleShare(dynamic build) {
     final String shareMessage = AppStrings.shareMessageTemplate
-        .replaceAll(
-          '{env}',
-          BuildEnvironment.fromString(build.environment).displayName,
-        )
         .replaceAll('{app}', build.projectName)
         .replaceAll('{version}', build.version)
         .replaceAll('{url}', build.downloadUrl);
@@ -477,15 +489,66 @@ class DashboardScreen extends GetView<DashboardController> {
       ),
     );
   }
+
+  Widget _buildSearchBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              focusNode: controller.searchFocusNode.value,
+              onTapOutside: (event) =>
+                  controller.searchFocusNode.value.unfocus(),
+              onEditingComplete: () =>
+                  controller.searchFocusNode.value.unfocus(),
+              onChanged: (value) => controller.searchQuery.value = value,
+              decoration: InputDecoration(
+                hintText: 'Search builds or versions...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Theme.of(context).cardColor,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: Obx(
+                () => Badge(
+                  isLabelVisible:
+                      controller.selectedPlatforms.isNotEmpty ||
+                      controller.selectedHostAccounts.isNotEmpty,
+                  child: const Icon(Icons.filter_list),
+                ),
+              ),
+              onPressed: () => FilterBottomSheet.show(context, controller),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _BuildHistoryTabs extends StatefulWidget {
   final List<AggregatedBuild> androidBuilds;
   final List<AggregatedBuild> iosBuilds;
+  final int initialIndex;
 
   const _BuildHistoryTabs({
     required this.androidBuilds,
     required this.iosBuilds,
+    this.initialIndex = 0,
   });
 
   @override
@@ -499,12 +562,24 @@ class _BuildHistoryTabsState extends State<_BuildHistoryTabs>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.initialIndex,
+    );
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {}); // Re-render the list below
       }
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant _BuildHistoryTabs oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialIndex != oldWidget.initialIndex) {
+      _tabController.animateTo(widget.initialIndex);
+    }
   }
 
   @override
@@ -554,7 +629,9 @@ class _BuildHistoryTabsState extends State<_BuildHistoryTabs>
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                    color: Theme.of(
+                      context,
+                    ).dividerColor.withValues(alpha: 0.1),
                   ),
                 ),
               ),
@@ -579,15 +656,18 @@ class _BuildHistoryTabsState extends State<_BuildHistoryTabs>
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: isActive 
-                                    ? Colors.green.withValues(alpha: 0.1) 
+                                color: isActive
+                                    ? Colors.green.withValues(alpha: 0.1)
                                     : Colors.grey.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color: isActive 
-                                      ? Colors.green.withValues(alpha: 0.5) 
+                                  color: isActive
+                                      ? Colors.green.withValues(alpha: 0.5)
                                       : Colors.grey.withValues(alpha: 0.5),
                                 ),
                               ),

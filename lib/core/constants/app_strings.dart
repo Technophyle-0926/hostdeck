@@ -40,7 +40,7 @@ class AppStrings {
   // Build Card Actions
   static const String download = 'Download';
   static const String share = 'Share';
-  static const String shareMessageTemplate = 'Check out the latest {env} build for {app} v{version}: {url}';
+  static const String shareMessageTemplate = 'Check out the latest build for {app} v{version}: {url}';
 
   // Dialogs
   static const String deleteAccount = 'Delete Account';

@@ -52,11 +52,11 @@ class DashboardController extends GetxController {
     return accounts.where((account) => account.isCapacityCritical()).toList();
   }
 
-  // Group builds by project name and platform, sorting the latest to the top
+  // Group builds by project name, sorting the latest to the top
   List<List<AggregatedBuild>> get groupedBuilds {
     final map = <String, List<AggregatedBuild>>{};
     for (var build in builds) {
-      final key = '${build.projectName}_${build.platform}';
+      final key = build.projectName;
       if (!map.containsKey(key)) {
         map[key] = [];
       }

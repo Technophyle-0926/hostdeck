@@ -17,6 +17,7 @@ class AggregatedBuildModel {
   late double sizeMb;
   late String platform;
   late String downloadUrl;
+  late String appIconUrl;
 
   AggregatedBuildModel();
 
@@ -30,10 +31,11 @@ class AggregatedBuildModel {
       ..uploadDate = entity.uploadDate
       ..sizeMb = entity.sizeMb
       ..platform = entity.platform
-      ..downloadUrl = entity.downloadUrl;
+      ..downloadUrl = entity.downloadUrl
+      ..appIconUrl = entity.appIconUrl;
   }
 
-  factory AggregatedBuildModel.fromFirestoreJson(Map<String, dynamic> json, int hostAccountId, String appName, [String appDownloadUrl = '']) {
+  factory AggregatedBuildModel.fromFirestoreJson(Map<String, dynamic> json, int hostAccountId, String appName, [String appDownloadUrl = '', String appIconUrl = '']) {
     final fields = json['fields'] ?? {};
     
     // Helper to safely extract values
@@ -70,7 +72,8 @@ class AggregatedBuildModel {
       ..platform = extractString('platform')
       ..downloadUrl = extractString('cached_share_key').isNotEmpty 
           ? 'https://appho.st/d/${extractString('cached_share_key')}'
-          : appDownloadUrl;
+          : appDownloadUrl
+      ..appIconUrl = appIconUrl;
   }
 
   AggregatedBuild toEntity() {
@@ -84,6 +87,7 @@ class AggregatedBuildModel {
       sizeMb: sizeMb,
       platform: platform,
       downloadUrl: downloadUrl,
+      appIconUrl: appIconUrl,
     );
   }
 }

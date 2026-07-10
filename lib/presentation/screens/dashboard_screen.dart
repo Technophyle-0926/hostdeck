@@ -32,7 +32,9 @@ class DashboardScreen extends GetView<DashboardController> {
         ],
       ),
       body: Obx(() {
-        Get.find<SettingsController>().themeMode.value; // Force rebuild on theme change
+        Get.find<SettingsController>()
+            .themeMode
+            .value; // Force rebuild on theme change
         final customTheme = Theme.of(context).extension<AppThemeExtension>()!;
         if (controller.isLoading.value && controller.accounts.isEmpty) {
           return const Center(child: CircularProgressIndicator());
@@ -162,33 +164,38 @@ class DashboardScreen extends GetView<DashboardController> {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    account.accountName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${account.appsCount} / ${account.maxAppsLimit} ${AppStrings.appsLabel}',
-                    style: const TextStyle(color: Colors.grey, fontSize: 13),
-                  ),
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      color: isCritical ? Colors.red : Colors.blue,
-                      minHeight: 8,
-                    ),
-                  ),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        account.accountName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${account.appsCount} / ${account.maxAppsLimit} ${AppStrings.appsLabel}',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
+                          color: isCritical ? Colors.red : Colors.blue,
+                          minHeight: 8,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -219,29 +226,69 @@ class DashboardScreen extends GetView<DashboardController> {
       delegate: SliverChildBuilderDelegate((context, index) {
         final group = groupedBuilds[index];
         final latestBuild = group.first;
-        final historicalBuilds = group.length > 1 ? group.sublist(1) : <AggregatedBuild>[];
 
-        Widget platformIcon;
-        final platformEnum = BuildPlatform.fromString(latestBuild.platform);
-        if (platformEnum == BuildPlatform.ios) {
-          platformIcon = Icon(Icons.apple, color: Theme.of(context).iconTheme.color);
-        } else if (platformEnum == BuildPlatform.android) {
-          platformIcon = const Icon(Icons.android, color: Color(0xFF3DDC84));
+        final androidBuilds = group
+            .where(
+              (b) =>
+                  BuildPlatform.fromString(b.platform) == BuildPlatform.android,
+            )
+            .toList();
+        final iosBuilds = group
+            .where(
+              (b) => BuildPlatform.fromString(b.platform) == BuildPlatform.ios,
+            )
+            .toList();
+
+        final androidVersion = androidBuilds.isNotEmpty ? 'Android v${androidBuilds.first.version}' : '';
+        final iosVersion = iosBuilds.isNotEmpty ? 'iOS v${iosBuilds.first.version}' : '';
+        final versionText = [androidVersion, iosVersion].where((v) => v.isNotEmpty).join('\n');
+
+        Widget appIcon;
+        if (latestBuild.appIconUrl.isNotEmpty) {
+          appIcon = ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              latestBuild.appIconUrl,
+              width: 48,
+              height: 48,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: 48,
+                  height: 48,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: customTheme.iconBackgroundColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.rocket_launch,
+                    color: customTheme.primaryIconColor,
+                  ),
+                );
+              },
+            ),
+          );
         } else {
-          platformIcon = Icon(Icons.rocket_launch, color: customTheme.primaryIconColor);
+          appIcon = Container(
+            width: 48,
+            height: 48,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: customTheme.iconBackgroundColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              Icons.rocket_launch,
+              color: customTheme.primaryIconColor,
+            ),
+          );
         }
 
         final mainCard = Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: customTheme.iconBackgroundColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: platformIcon,
-            ),
+            appIcon,
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -253,7 +300,10 @@ class DashboardScreen extends GetView<DashboardController> {
                       Expanded(
                         child: Text(
                           latestBuild.projectName,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -269,12 +319,17 @@ class DashboardScreen extends GetView<DashboardController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${AppStrings.versionPrefix}${latestBuild.version} • ${latestBuild.sizeMb.toStringAsFixed(1)} MB',
-                              style: const TextStyle(color: Colors.grey, fontSize: 13),
+                              versionText,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 13,
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              DateFormatterUtils.formatBuildDate(latestBuild.uploadDate),
+                              DateFormatterUtils.formatBuildDate(
+                                latestBuild.uploadDate,
+                              ),
                               style: const TextStyle(fontSize: 11),
                             ),
                           ],
@@ -283,7 +338,8 @@ class DashboardScreen extends GetView<DashboardController> {
                       if (latestBuild.downloadUrl.isNotEmpty) ...[
                         IconButton(
                           icon: const Icon(Icons.download, size: 20),
-                          onPressed: () => _handleDownload(latestBuild.downloadUrl),
+                          onPressed: () =>
+                              _handleDownload(latestBuild.downloadUrl),
                           padding: const EdgeInsets.all(8),
                           constraints: const BoxConstraints(),
                           tooltip: AppStrings.download,
@@ -307,59 +363,22 @@ class DashboardScreen extends GetView<DashboardController> {
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
-          child: historicalBuilds.isEmpty
-              ? Padding(padding: const EdgeInsets.all(16), child: mainCard)
-              : Theme(
-                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                  child: ExpansionTile(
-                    tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    title: mainCard,
-                    children: historicalBuilds.map((oldBuild) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(width: 60), // Indent past icon (12+24+12+16)
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          'v${oldBuild.version} • ${oldBuild.sizeMb.toStringAsFixed(1)} MB',
-                                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          DateFormatterUtils.formatBuildDate(oldBuild.uploadDate),
-                                          style: const TextStyle(fontSize: 11, color: Colors.grey),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                  ),
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              title: mainCard,
+              children: [
+                _BuildHistoryTabs(
+                  androidBuilds: androidBuilds,
+                  iosBuilds: iosBuilds,
                 ),
+              ],
+            ),
+          ),
         );
       }, childCount: groupedBuilds.length),
     );
@@ -371,9 +390,12 @@ class DashboardScreen extends GetView<DashboardController> {
       finalUrl = 'https://$finalUrl';
     }
     final uri = Uri.parse(finalUrl);
-    
+
     try {
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
       if (!launched) {
         Get.snackbar(AppStrings.error, 'Could not launch download link');
       }
@@ -384,11 +406,14 @@ class DashboardScreen extends GetView<DashboardController> {
 
   void _handleShare(dynamic build) {
     final String shareMessage = AppStrings.shareMessageTemplate
-        .replaceAll('{env}', BuildEnvironment.fromString(build.environment).displayName)
+        .replaceAll(
+          '{env}',
+          BuildEnvironment.fromString(build.environment).displayName,
+        )
         .replaceAll('{app}', build.projectName)
         .replaceAll('{version}', build.version)
         .replaceAll('{url}', build.downloadUrl);
-        
+
     SharePlus.instance.share(ShareParams(text: shareMessage));
   }
 
@@ -414,20 +439,13 @@ class DashboardScreen extends GetView<DashboardController> {
             const SizedBox(height: 32),
             const Text(
               AppStrings.welcomeTitle,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             const Text(
               AppStrings.welcomeDesc,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-                height: 1.5,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey, height: 1.5),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 40),
@@ -457,6 +475,132 @@ class DashboardScreen extends GetView<DashboardController> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _BuildHistoryTabs extends StatefulWidget {
+  final List<AggregatedBuild> androidBuilds;
+  final List<AggregatedBuild> iosBuilds;
+
+  const _BuildHistoryTabs({
+    required this.androidBuilds,
+    required this.iosBuilds,
+  });
+
+  @override
+  State<_BuildHistoryTabs> createState() => _BuildHistoryTabsState();
+}
+
+class _BuildHistoryTabsState extends State<_BuildHistoryTabs>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {}); // Re-render the list below
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final activeBuilds = _tabController.index == 0
+        ? widget.androidBuilds
+        : widget.iosBuilds;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TabBar(
+          controller: _tabController,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Colors.grey,
+          indicatorSize: TabBarIndicatorSize.tab,
+          tabs: const [
+            Tab(text: 'Android'),
+            Tab(text: 'iOS'),
+          ],
+        ),
+        if (activeBuilds.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(32.0),
+            child: Center(
+              child: Text(
+                'No builds available',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          )
+        else
+          ...activeBuilds.map((oldBuild) {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
+                  ),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(width: 48), // Indent
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'v${oldBuild.version} • ${oldBuild.sizeMb.toStringAsFixed(1)} MB',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                DateFormatterUtils.formatBuildDate(
+                                  oldBuild.uploadDate,
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+      ],
     );
   }
 }

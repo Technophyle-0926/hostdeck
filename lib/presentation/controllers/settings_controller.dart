@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hostdeck/data/datasources/remote/firestore_sync_service.dart';
 import '../../data/datasources/local/settings_service.dart';
 import '../../data/datasources/local/database_service.dart';
 import '../../data/datasources/local/secure_storage_service.dart';
@@ -106,6 +107,11 @@ class SettingsController extends GetxController {
       if (Get.isRegistered<DashboardController>()) {
         Get.find<DashboardController>().refreshAllAccounts();
       }
+      
+      // Sync up to Firestore
+      final syncService = Get.find<FirestoreSyncService>();
+      final secureStorage = Get.find<SecureStorageService>();
+      await syncService.syncUp(accounts, secureStorage);
       
       isAddingAccount.value = false;
       return true;

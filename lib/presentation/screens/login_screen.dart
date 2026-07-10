@@ -13,7 +13,10 @@ class LoginScreen extends GetView<AuthController> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.rocket_launch, size: 80, color: Colors.blue),
+            // const Icon(Icons.rocket_launch, size: 80, color: Colors.blue),
+            ClipOval(
+              child: Image.asset('assets/icon/app_icon.png', height: 80),
+            ),
             const SizedBox(height: 24),
             const Text(
               'Welcome to HostDeck',

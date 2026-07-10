@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hostdeck/data/datasources/local/database_service.dart';
+import 'package:hostdeck/data/datasources/local/secure_storage_service.dart';
+import 'package:hostdeck/data/datasources/remote/firestore_sync_service.dart';
 import 'package:hostdeck/data/datasources/remote/google_auth_service.dart';
 import 'package:hostdeck/routes/app_pages.dart';
 
@@ -30,7 +33,12 @@ class AuthController extends GetxController {
 
   Future<void> signInWithGoogle() async {
     final user = await _googleAuthService.signInWithGoogle();
-    if (user == null) {
+    if (user != null) {
+      final secureStorage = Get.find<SecureStorageService>();
+      final syncService = Get.find<FirestoreSyncService>();
+      final remoteAccounts = await syncService.syncDown(secureStorage);
+      await Get.find<DatabaseService>().saveHostAccounts(remoteAccounts);
+    } else {
       Get.snackbar(
         'Sign-in Cancelled',
         'Could not complete Google Sign-In.',
@@ -43,6 +51,9 @@ class AuthController extends GetxController {
   }
 
   Future<void> signOut() async {
+    await Get.find<DatabaseService>().saveHostAccounts([]);
+    await Get.find<DatabaseService>().saveBuilds([]);
+    await Get.find<SecureStorageService>().clearAll();
     await _googleAuthService.signOut();
   }
 }

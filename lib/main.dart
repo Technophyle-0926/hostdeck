@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:hostdeck/data/datasources/remote/firestore_sync_service.dart';
 import 'package:hostdeck/firebase_options.dart';
 import 'package:hostdeck/presentation/controllers/auth_controller.dart';
 import 'core/theme/app_theme.dart';
@@ -39,6 +40,7 @@ void main() async {
   Get.put<AuthRepository>(AuthRepositoryImpl(Dio()), permanent: true);
 
   Get.put<AuthController>(AuthController(), permanent: true);
+  Get.put<FirestoreSyncService>(FirestoreSyncService(), permanent: true);
   // Initialize SettingsController AFTER its dependencies are registered
   Get.put<SettingsController>(SettingsController(), permanent: true);
 

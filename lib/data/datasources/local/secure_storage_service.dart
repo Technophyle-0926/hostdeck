@@ -14,4 +14,8 @@ class SecureStorageService {
   Future<void> deletePassword(String email) async {
     await _storage.delete(key: 'password_$email');
   }
+
+  Future<void> clearAll() async {
+    await _storage.deleteAll();
+  }
 }

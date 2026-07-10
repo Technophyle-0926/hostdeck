@@ -29,6 +29,7 @@ dependencies:
   google_sign_in: ^7.2.0
   encrypt: ^5.0.3
   sign_in_button: ^5.0.0
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:
@@ -42,3 +43,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/icon/

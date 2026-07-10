@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hostdeck/firebase_options.dart';
+import 'package:hostdeck/presentation/controllers/auth_controller.dart';
 import 'core/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'routes/app_pages.dart';
@@ -19,6 +21,10 @@ void main() async {
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  await GoogleSignIn.instance.initialize(
+    serverClientId: '45495419491-fs2t97f67btetgf52q8aphkab0a9i1qd.apps.googleusercontent.com'
+  );
+
   // Initialize Global Services
   final settingsService = SettingsService();
   await settingsService.init();
@@ -32,6 +38,7 @@ void main() async {
   Get.put<SecureStorageService>(SecureStorageService(), permanent: true);
   Get.put<AuthRepository>(AuthRepositoryImpl(Dio()), permanent: true);
 
+  Get.put<AuthController>(AuthController(), permanent: true);
   // Initialize SettingsController AFTER its dependencies are registered
   Get.put<SettingsController>(SettingsController(), permanent: true);
 

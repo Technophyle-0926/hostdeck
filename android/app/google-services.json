@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "45495419491",
+    "project_id": "hostdeck-d4aa5",
+    "storage_bucket": "hostdeck-d4aa5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:45495419491:android:76f7029790da2827352e56",
+        "android_client_info": {
+          "package_name": "dev.meetvishavadia.hostdeck"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "45495419491-fs2t97f67btetgf52q8aphkab0a9i1qd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnJeO0XPybAs6WfBjeK1xsYLyqF_58uDs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "45495419491-fs2t97f67btetgf52q8aphkab0a9i1qd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "45495419491-omlq9ev0v3m7aoamqpibvbp06nn58u3p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "dev.meetvishavadia.hostdeck"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

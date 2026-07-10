@@ -1,4 +1,6 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:hostdeck/firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'routes/app_pages.dart';
@@ -14,6 +16,9 @@ import 'data/repositories/auth_repository_impl.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Initialize Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   // Initialize Global Services
   final settingsService = SettingsService();
   await settingsService.init();
@@ -42,7 +47,8 @@ class HostDeckApp extends StatelessWidget {
       title: 'HostDeck',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system, // Will be overridden by SettingsController on init
+      themeMode:
+          ThemeMode.system, // Will be overridden by SettingsController on init
       initialRoute: AppPages.initial,
       getPages: AppPages.routes,
       debugShowCheckedModeBanner: false,

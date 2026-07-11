@@ -21,6 +21,13 @@ class FirestoreSyncService {
   ) async {
     final batch = _firestore.batch();
     final accountsCollection = _userDoc.collection('host_accounts');
+    final snapshot = await accountsCollection.get();
+    final localEmails = accounts.map((account) => account.email).toSet();
+    for (var doc in snapshot.docs) {
+      if(!localEmails.contains(doc.id)){
+        batch.delete(doc.reference);
+      }
+    }
 
     for (var account in accounts) {
       final password = await secureStorage.getPassword(account.email);
@@ -61,5 +68,28 @@ class FirestoreSyncService {
       }
     }
     return remoteAccounts;
+  }
+
+  Future<void> addOrUpdateAccount(
+    HostAccount account,
+    SecureStorageService secureStorage,
+  ) async {
+    final password = await secureStorage.getPassword(account.email);
+    if (password == null) return;
+    
+    final encryptedPassword = _encryptionService.encrypt(password);
+    final docRef = _userDoc.collection('host_accounts').doc(account.email);
+    
+    await docRef.set({
+      'accountName': account.accountName,
+      'email': account.email,
+      'encryptedPassword': encryptedPassword,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> deleteRemoteAccount(HostAccount account) async {
+    final docRef = _userDoc.collection('host_accounts').doc(account.email);
+    await docRef.delete();
   }
 }

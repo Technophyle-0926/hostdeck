@@ -113,7 +113,7 @@ class SettingsController extends GetxController {
       // Sync up to Firestore
       final syncService = Get.find<FirestoreSyncService>();
       final secureStorage = Get.find<SecureStorageService>();
-      await syncService.syncUp(accounts, secureStorage);
+      await syncService.addOrUpdateAccount(newAccount, secureStorage);
       
       isAddingAccount.value = false;
       return true;
@@ -178,6 +178,15 @@ class SettingsController extends GetxController {
       if (Get.isRegistered<DashboardController>()) {
         Get.find<DashboardController>().refreshAllAccounts();
       }
+
+      // Sync up to Firestore
+      final syncService = Get.find<FirestoreSyncService>();
+      final secureStorage = Get.find<SecureStorageService>();
+      if(oldAccount.email != email) {
+        await syncService.deleteRemoteAccount(oldAccount);
+      }
+      final updatedAccount = accounts.firstWhere((account) => account.email == email);
+      await syncService.addOrUpdateAccount(updatedAccount, secureStorage);
       
       isAddingAccount.value = false;
       return true;
@@ -199,6 +208,10 @@ class SettingsController extends GetxController {
     if (Get.isRegistered<DashboardController>()) {
       Get.find<DashboardController>().refreshAllAccounts();
     }
+
+    // Sync up to Firestore
+    final syncService = Get.find<FirestoreSyncService>();
+    await syncService.deleteRemoteAccount(account);
   }
 
   Future<String?> getPassword(String email) async {

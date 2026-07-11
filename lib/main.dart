@@ -1,4 +1,11 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:hostdeck/core/constants/app_constants.dart';
+import 'package:hostdeck/core/constants/app_strings.dart';
+import 'package:hostdeck/data/datasources/remote/firestore_sync_service.dart';
+import 'package:hostdeck/firebase_options.dart';
+import 'package:hostdeck/presentation/controllers/auth_controller.dart';
 import 'core/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'routes/app_pages.dart';
@@ -13,7 +20,14 @@ import 'data/repositories/auth_repository_impl.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Initialize Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  await GoogleSignIn.instance.initialize(
+    serverClientId: AppConstants.serverClientId,
+  );
+
   // Initialize Global Services
   final settingsService = SettingsService();
   await settingsService.init();
@@ -27,6 +41,8 @@ void main() async {
   Get.put<SecureStorageService>(SecureStorageService(), permanent: true);
   Get.put<AuthRepository>(AuthRepositoryImpl(Dio()), permanent: true);
 
+  Get.put<AuthController>(AuthController(), permanent: true);
+  Get.put<FirestoreSyncService>(FirestoreSyncService(), permanent: true);
   // Initialize SettingsController AFTER its dependencies are registered
   Get.put<SettingsController>(SettingsController(), permanent: true);
 
@@ -39,10 +55,11 @@ class HostDeckApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'HostDeck',
+      title: AppStrings.appName,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system, // Will be overridden by SettingsController on init
+      themeMode:
+          ThemeMode.system, // Will be overridden by SettingsController on init
       initialRoute: AppPages.initial,
       getPages: AppPages.routes,
       debugShowCheckedModeBanner: false,

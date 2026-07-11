@@ -18,43 +18,48 @@ const AggregatedBuildModelSchema = CollectionSchema(
   name: r'AggregatedBuildModel',
   id: -7672414250143312042,
   properties: {
-    r'downloadUrl': PropertySchema(
+    r'appIconUrl': PropertySchema(
       id: 0,
+      name: r'appIconUrl',
+      type: IsarType.string,
+    ),
+    r'downloadUrl': PropertySchema(
+      id: 1,
       name: r'downloadUrl',
       type: IsarType.string,
     ),
     r'environment': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'environment',
       type: IsarType.string,
     ),
     r'hostAccountId': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'hostAccountId',
       type: IsarType.long,
     ),
     r'platform': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'platform',
       type: IsarType.string,
     ),
     r'projectName': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'projectName',
       type: IsarType.string,
     ),
     r'sizeMb': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'sizeMb',
       type: IsarType.double,
     ),
     r'uploadDate': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'uploadDate',
       type: IsarType.dateTime,
     ),
     r'version': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'version',
       type: IsarType.string,
     )
@@ -93,6 +98,7 @@ int _aggregatedBuildModelEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.appIconUrl.length * 3;
   bytesCount += 3 + object.downloadUrl.length * 3;
   bytesCount += 3 + object.environment.length * 3;
   bytesCount += 3 + object.platform.length * 3;
@@ -107,14 +113,15 @@ void _aggregatedBuildModelSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.downloadUrl);
-  writer.writeString(offsets[1], object.environment);
-  writer.writeLong(offsets[2], object.hostAccountId);
-  writer.writeString(offsets[3], object.platform);
-  writer.writeString(offsets[4], object.projectName);
-  writer.writeDouble(offsets[5], object.sizeMb);
-  writer.writeDateTime(offsets[6], object.uploadDate);
-  writer.writeString(offsets[7], object.version);
+  writer.writeString(offsets[0], object.appIconUrl);
+  writer.writeString(offsets[1], object.downloadUrl);
+  writer.writeString(offsets[2], object.environment);
+  writer.writeLong(offsets[3], object.hostAccountId);
+  writer.writeString(offsets[4], object.platform);
+  writer.writeString(offsets[5], object.projectName);
+  writer.writeDouble(offsets[6], object.sizeMb);
+  writer.writeDateTime(offsets[7], object.uploadDate);
+  writer.writeString(offsets[8], object.version);
 }
 
 AggregatedBuildModel _aggregatedBuildModelDeserialize(
@@ -124,15 +131,16 @@ AggregatedBuildModel _aggregatedBuildModelDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = AggregatedBuildModel();
-  object.downloadUrl = reader.readString(offsets[0]);
-  object.environment = reader.readString(offsets[1]);
-  object.hostAccountId = reader.readLong(offsets[2]);
+  object.appIconUrl = reader.readString(offsets[0]);
+  object.downloadUrl = reader.readString(offsets[1]);
+  object.environment = reader.readString(offsets[2]);
+  object.hostAccountId = reader.readLong(offsets[3]);
   object.id = id;
-  object.platform = reader.readString(offsets[3]);
-  object.projectName = reader.readString(offsets[4]);
-  object.sizeMb = reader.readDouble(offsets[5]);
-  object.uploadDate = reader.readDateTime(offsets[6]);
-  object.version = reader.readString(offsets[7]);
+  object.platform = reader.readString(offsets[4]);
+  object.projectName = reader.readString(offsets[5]);
+  object.sizeMb = reader.readDouble(offsets[6]);
+  object.uploadDate = reader.readDateTime(offsets[7]);
+  object.version = reader.readString(offsets[8]);
   return object;
 }
 
@@ -148,16 +156,18 @@ P _aggregatedBuildModelDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readLong(offset)) as P;
-    case 3:
       return (reader.readString(offset)) as P;
+    case 3:
+      return (reader.readLong(offset)) as P;
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 6:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 7:
+      return (reader.readDateTime(offset)) as P;
+    case 8:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -363,6 +373,144 @@ extension AggregatedBuildModelQueryWhere
 
 extension AggregatedBuildModelQueryFilter on QueryBuilder<AggregatedBuildModel,
     AggregatedBuildModel, QFilterCondition> {
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel,
+      QAfterFilterCondition> appIconUrlEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'appIconUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel,
+      QAfterFilterCondition> appIconUrlGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'appIconUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel,
+      QAfterFilterCondition> appIconUrlLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'appIconUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel,
+      QAfterFilterCondition> appIconUrlBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'appIconUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel,
+      QAfterFilterCondition> appIconUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'appIconUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel,
+      QAfterFilterCondition> appIconUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'appIconUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel,
+          QAfterFilterCondition>
+      appIconUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'appIconUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel,
+          QAfterFilterCondition>
+      appIconUrlMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'appIconUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel,
+      QAfterFilterCondition> appIconUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'appIconUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel,
+      QAfterFilterCondition> appIconUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'appIconUrl',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<AggregatedBuildModel, AggregatedBuildModel,
       QAfterFilterCondition> downloadUrlEqualTo(
     String value, {
@@ -1297,6 +1445,20 @@ extension AggregatedBuildModelQueryLinks on QueryBuilder<AggregatedBuildModel,
 extension AggregatedBuildModelQuerySortBy
     on QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QSortBy> {
   QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QAfterSortBy>
+      sortByAppIconUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'appIconUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QAfterSortBy>
+      sortByAppIconUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'appIconUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QAfterSortBy>
       sortByDownloadUrl() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'downloadUrl', Sort.asc);
@@ -1411,6 +1573,20 @@ extension AggregatedBuildModelQuerySortBy
 
 extension AggregatedBuildModelQuerySortThenBy
     on QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QSortThenBy> {
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QAfterSortBy>
+      thenByAppIconUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'appIconUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QAfterSortBy>
+      thenByAppIconUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'appIconUrl', Sort.desc);
+    });
+  }
+
   QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QAfterSortBy>
       thenByDownloadUrl() {
     return QueryBuilder.apply(this, (query) {
@@ -1541,6 +1717,13 @@ extension AggregatedBuildModelQuerySortThenBy
 extension AggregatedBuildModelQueryWhereDistinct
     on QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QDistinct> {
   QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QDistinct>
+      distinctByAppIconUrl({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'appIconUrl', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QDistinct>
       distinctByDownloadUrl({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'downloadUrl', caseSensitive: caseSensitive);
@@ -1602,6 +1785,13 @@ extension AggregatedBuildModelQueryProperty on QueryBuilder<
   QueryBuilder<AggregatedBuildModel, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, String, QQueryOperations>
+      appIconUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'appIconUrl');
     });
   }
 

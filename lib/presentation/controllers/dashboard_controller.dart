@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hostdeck/core/constants/app_enums.dart';
 import '../../domain/repositories/dashboard_repository.dart';
 import '../../domain/entities/host_account.dart';
 import '../../domain/entities/aggregated_build.dart';
@@ -7,10 +9,15 @@ import '../../domain/entities/aggregated_build.dart';
 class DashboardController extends GetxController {
   final DashboardRepository _repository = Get.find<DashboardRepository>();
 
+  final Rx<FocusNode> searchFocusNode = Rx<FocusNode>(FocusNode());
 
   final RxList<HostAccount> accounts = <HostAccount>[].obs;
   final RxList<AggregatedBuild> builds = <AggregatedBuild>[].obs;
-  
+
+  final RxString searchQuery = ''.obs;
+  final RxList<BuildPlatform> selectedPlatforms = <BuildPlatform>[].obs;
+  final RxList<int> selectedHostAccounts = <int>[].obs;
+
   final RxBool isLoading = true.obs;
   final RxBool isWarningDismissed = false.obs;
   
@@ -52,11 +59,29 @@ class DashboardController extends GetxController {
     return accounts.where((account) => account.isCapacityCritical()).toList();
   }
 
-  // Group builds by project name and platform, sorting the latest to the top
+  // Group builds by project name, sorting the latest to the top
   List<List<AggregatedBuild>> get groupedBuilds {
     final map = <String, List<AggregatedBuild>>{};
+
+    final search = searchQuery.value.toLowerCase();
+
     for (var build in builds) {
-      final key = '${build.projectName}_${build.platform}';
+      if(searchQuery.isNotEmpty && !build.projectName.toLowerCase().contains(search) && !build.version.toLowerCase().contains(search)) {
+        continue;
+      }
+
+      if (selectedPlatforms.isNotEmpty) {
+        final currentPlatform = BuildPlatform.fromString(build.platform);
+        if (!selectedPlatforms.contains(currentPlatform)) {
+          continue;
+        }
+      }
+
+      if(selectedHostAccounts.isNotEmpty && !selectedHostAccounts.contains(build.hostAccountId)) {
+        continue;
+      }
+
+      final key = build.projectName;
       if (!map.containsKey(key)) {
         map[key] = [];
       }

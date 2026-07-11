@@ -14,7 +14,8 @@
 ## ✨ Features
 
 - **Multi-Account Management:** Seamlessly add, manage, and switch between multiple AppHost accounts.
-- **Build Monitoring:** Track and aggregate builds across your linked accounts.
+- **Build Monitoring & Filtering:** Track and aggregate builds across your linked accounts. Filter builds by Platform (iOS/Android) and Host Account with a sleek search interface.
+- **End-to-End Encrypted Cloud Sync:** Login with Google to securely sync your accounts across devices. Passwords are AES-256 encrypted locally before ever hitting the cloud!
 - **Secure Storage:** Uses `flutter_secure_storage` and `Isar` to ensure your account credentials and local data are safe and performant.
 - **Modern UI:** Built with Flutter, featuring a beautiful and responsive dashboard and dark/light theme support.
 - **Clean Architecture:** Structured cleanly for maintainability and scalability, leveraging `GetX` for state management.
@@ -23,9 +24,10 @@
 
 - **Framework:** [Flutter](https://flutter.dev/)
 - **State Management & Routing:** [GetX](https://pub.dev/packages/get)
+- **Authentication & Cloud:** [Firebase Auth](https://firebase.google.com/) & [Cloud Firestore](https://firebase.google.com/docs/firestore)
 - **Local Database:** [Isar Database](https://isar.dev/)
 - **Networking:** [Dio](https://pub.dev/packages/dio)
-- **Secure Storage:** [Flutter Secure Storage](https://pub.dev/packages/flutter_secure_storage)
+- **Security:** [Flutter Secure Storage](https://pub.dev/packages/flutter_secure_storage) & [Encrypt](https://pub.dev/packages/encrypt) (AES-256)
 
 ## 📂 Project Structure
 

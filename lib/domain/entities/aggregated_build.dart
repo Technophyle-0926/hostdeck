@@ -8,6 +8,7 @@ class AggregatedBuild {
   final double sizeMb;
   final String platform;
   final String downloadUrl;
+  final String appIconUrl;
 
   AggregatedBuild({
     required this.id,
@@ -19,5 +20,6 @@ class AggregatedBuild {
     required this.sizeMb,
     required this.platform,
     required this.downloadUrl,
+    this.appIconUrl = '',
   });
 }

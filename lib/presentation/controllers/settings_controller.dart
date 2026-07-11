@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hostdeck/data/datasources/remote/firestore_sync_service.dart';
 import '../../data/datasources/local/settings_service.dart';
 import '../../data/datasources/local/database_service.dart';
 import '../../data/datasources/local/secure_storage_service.dart';
+import '../../core/constants/app_strings.dart';
+import '../../core/constants/app_keys.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/entities/host_account.dart';
 import '../controllers/dashboard_controller.dart';
@@ -57,8 +60,8 @@ class SettingsController extends GetxController {
     isAddingAccount.value = true;
     try {
       final authData = await _authRepository.authenticateAccount(email, password);
-      final idToken = authData['idToken'] as String;
-      final localId = authData['localId'] as String;
+      final idToken = authData[AppKeys.idToken] as String;
+      final localId = authData[AppKeys.localId] as String;
       
       // 2. Save securely
       await _secureStorageService.savePassword(email, password);
@@ -66,7 +69,7 @@ class SettingsController extends GetxController {
       final currentAccounts = await _databaseService.getHostAccounts();
       if (currentAccounts.any((a) => a.email == email)) {
         isAddingAccount.value = false;
-        Get.snackbar('Error', 'An account with this email already exists.', snackPosition: SnackPosition.BOTTOM);
+        Get.snackbar(AppStrings.error, AppStrings.accountExists, snackPosition: SnackPosition.BOTTOM);
         return false;
       }
       
@@ -74,13 +77,13 @@ class SettingsController extends GetxController {
       final apiClient = Get.find<ApiClient>();
       final profileDoc = await apiClient.fetchAccountProfile(localId, idToken);
       int maxApps = 5;
-      if (profileDoc.containsKey('fields')) {
-        final fields = profileDoc['fields'] as Map<String, dynamic>;
-        for (var key in ['max_apps', 'max_apps_limit', 'limit', 'plan_limit', 'app_limit']) {
+      if (profileDoc.containsKey(AppKeys.fields)) {
+        final fields = profileDoc[AppKeys.fields] as Map<String, dynamic>;
+        for (var key in [AppKeys.maxApps, AppKeys.maxAppsLimit, AppKeys.limit, AppKeys.planLimit, AppKeys.appLimit]) {
           if (fields.containsKey(key)) {
             final field = fields[key];
-            if (field.containsKey('integerValue')) {
-              maxApps = int.tryParse(field['integerValue'].toString()) ?? maxApps;
+            if (field.containsKey(AppKeys.integerValue)) {
+              maxApps = int.tryParse(field[AppKeys.integerValue].toString()) ?? maxApps;
               break;
             }
           }
@@ -107,11 +110,16 @@ class SettingsController extends GetxController {
         Get.find<DashboardController>().refreshAllAccounts();
       }
       
+      // Sync up to Firestore
+      final syncService = Get.find<FirestoreSyncService>();
+      final secureStorage = Get.find<SecureStorageService>();
+      await syncService.syncUp(accounts, secureStorage);
+      
       isAddingAccount.value = false;
       return true;
     } catch (e) {
       isAddingAccount.value = false;
-      Get.snackbar('Authentication Failed', e.toString(), snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(AppStrings.authFailed, e.toString(), snackPosition: SnackPosition.BOTTOM);
       return false;
     }
   }
@@ -120,8 +128,8 @@ class SettingsController extends GetxController {
     isAddingAccount.value = true;
     try {
       final authData = await _authRepository.authenticateAccount(email, password);
-      final idToken = authData['idToken'] as String;
-      final localId = authData['localId'] as String;
+      final idToken = authData[AppKeys.idToken] as String;
+      final localId = authData[AppKeys.localId] as String;
       
       if (oldAccount.email != email) {
         await _secureStorageService.deletePassword(oldAccount.email);
@@ -175,7 +183,7 @@ class SettingsController extends GetxController {
       return true;
     } catch (e) {
       isAddingAccount.value = false;
-      Get.snackbar('Authentication Failed', e.toString(), snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(AppStrings.authFailed, e.toString(), snackPosition: SnackPosition.BOTTOM);
       return false;
     }
   }
@@ -218,7 +226,7 @@ class SettingsController extends GetxController {
         return await _secureStorageService.getPassword(email);
       }
     } catch (e) {
-      Get.snackbar('Authentication Failed', e.toString());
+      Get.snackbar(AppStrings.authFailed, e.toString());
     }
     return null;
   }

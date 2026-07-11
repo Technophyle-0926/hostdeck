@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../models/host_account_model.dart';
 import '../../models/aggregated_build_model.dart';

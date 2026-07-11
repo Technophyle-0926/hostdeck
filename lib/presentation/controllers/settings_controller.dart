@@ -28,7 +28,7 @@ class SettingsController extends GetxController {
     super.onInit();
     themeMode.value = _settingsService.getThemeMode();
     _applyTheme();
-    _loadAccounts();
+    loadAccounts();
   }
 
   void updateThemeMode(int newMode) {
@@ -52,7 +52,7 @@ class SettingsController extends GetxController {
     Get.changeThemeMode(mode);
   }
 
-  Future<void> _loadAccounts() async {
+  Future<void> loadAccounts() async {
     accounts.value = await _databaseService.getHostAccounts();
   }
 
@@ -103,7 +103,7 @@ class SettingsController extends GetxController {
       currentAccounts.add(newAccount);
       await _databaseService.saveHostAccounts(currentAccounts);
       
-      await _loadAccounts();
+      await loadAccounts();
       
       // Refresh dashboard
       if (Get.isRegistered<DashboardController>()) {
@@ -173,7 +173,7 @@ class SettingsController extends GetxController {
         await _databaseService.saveHostAccounts(currentAccounts);
       }
       
-      await _loadAccounts();
+      await loadAccounts();
       
       if (Get.isRegistered<DashboardController>()) {
         Get.find<DashboardController>().refreshAllAccounts();
@@ -193,7 +193,7 @@ class SettingsController extends GetxController {
     final currentAccounts = await _databaseService.getHostAccounts();
     currentAccounts.removeWhere((a) => a.id == account.id);
     await _databaseService.saveHostAccounts(currentAccounts);
-    await _loadAccounts();
+    await loadAccounts();
     
     // Refresh dashboard
     if (Get.isRegistered<DashboardController>()) {

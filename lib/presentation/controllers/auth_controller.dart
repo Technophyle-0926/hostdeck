@@ -5,6 +5,7 @@ import 'package:hostdeck/data/datasources/local/database_service.dart';
 import 'package:hostdeck/data/datasources/local/secure_storage_service.dart';
 import 'package:hostdeck/data/datasources/remote/firestore_sync_service.dart';
 import 'package:hostdeck/data/datasources/remote/google_auth_service.dart';
+import 'package:hostdeck/presentation/controllers/settings_controller.dart';
 import 'package:hostdeck/routes/app_pages.dart';
 import 'package:hostdeck/core/constants/app_strings.dart';
 
@@ -12,6 +13,7 @@ class AuthController extends GetxController {
   final GoogleAuthService _googleAuthService = GoogleAuthService();
 
   final Rx<User?> firebaseUser = Rx<User?>(null);
+  final RxBool isSigningIn = false.obs;
 
   @override
   void onReady() {
@@ -21,6 +23,8 @@ class AuthController extends GetxController {
   }
 
   void _setInitialScreen(User? user) {
+    if (isSigningIn.value) return;
+
     if (user == null) {
       if (Get.currentRoute != Routes.login) {
         Get.offAllNamed(Routes.login);
@@ -33,21 +37,29 @@ class AuthController extends GetxController {
   }
 
   Future<void> signInWithGoogle() async {
-    final user = await _googleAuthService.signInWithGoogle();
-    if (user != null) {
-      final secureStorage = Get.find<SecureStorageService>();
-      final syncService = Get.find<FirestoreSyncService>();
-      final remoteAccounts = await syncService.syncDown(secureStorage);
-      await Get.find<DatabaseService>().saveHostAccounts(remoteAccounts);
-    } else {
-      Get.snackbar(
-        AppStrings.signInCancelled,
-        AppStrings.signInCancelledDesc,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
-        colorText: Colors.red,
-        margin: const EdgeInsets.all(16),
-      );
+    isSigningIn.value = true;
+
+    try {
+      final user = await _googleAuthService.signInWithGoogle();
+      if (user != null) {
+        final secureStorage = Get.find<SecureStorageService>();
+        final syncService = Get.find<FirestoreSyncService>();
+        final remoteAccounts = await syncService.syncDown(secureStorage);
+        await Get.find<DatabaseService>().saveHostAccounts(remoteAccounts);
+        Get.find<SettingsController>().loadAccounts();
+        Get.offAllNamed(Routes.dashboard);
+      } else {
+        Get.snackbar(
+          AppStrings.signInCancelled,
+          AppStrings.signInCancelledDesc,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
+          colorText: Colors.red,
+          margin: const EdgeInsets.all(16),
+        );
+      }
+    } finally {
+      isSigningIn.value = false;
     }
   }
 
@@ -55,6 +67,7 @@ class AuthController extends GetxController {
     await Get.find<DatabaseService>().saveHostAccounts([]);
     await Get.find<DatabaseService>().saveBuilds([]);
     await Get.find<SecureStorageService>().clearAll();
+    Get.find<SettingsController>().accounts.clear();
     await _googleAuthService.signOut();
   }
 }

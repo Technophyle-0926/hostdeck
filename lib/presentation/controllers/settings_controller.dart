@@ -22,6 +22,7 @@ class SettingsController extends GetxController {
   final themeMode = 0.obs; // 0=system, 1=light, 2=dark
   final accounts = <HostAccount>[].obs;
   final isAddingAccount = false.obs;
+  final RxBool isLoading = true.obs;
 
   @override
   void onInit() {
@@ -52,8 +53,13 @@ class SettingsController extends GetxController {
     Get.changeThemeMode(mode);
   }
 
-  Future<void> loadAccounts() async {
+  Future<void> loadAccounts({bool showLoading = true}) async {
+    if (showLoading) isLoading.value = true;
     accounts.value = await _databaseService.getHostAccounts();
+    if (showLoading) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      isLoading.value = false;
+    }
   }
 
   Future<bool> addAccount(String name, String email, String password) async {
@@ -103,7 +109,7 @@ class SettingsController extends GetxController {
       currentAccounts.add(newAccount);
       await _databaseService.saveHostAccounts(currentAccounts);
       
-      await loadAccounts();
+      await loadAccounts(showLoading: false);
       
       // Refresh dashboard
       if (Get.isRegistered<DashboardController>()) {
@@ -113,7 +119,7 @@ class SettingsController extends GetxController {
       // Sync up to Firestore
       final syncService = Get.find<FirestoreSyncService>();
       final secureStorage = Get.find<SecureStorageService>();
-      await syncService.syncUp(accounts, secureStorage);
+      await syncService.addOrUpdateAccount(newAccount, secureStorage);
       
       isAddingAccount.value = false;
       return true;
@@ -122,6 +128,90 @@ class SettingsController extends GetxController {
       Get.snackbar(AppStrings.authFailed, e.toString(), snackPosition: SnackPosition.BOTTOM);
       return false;
     }
+  }
+
+  Future<int> addMultipleAccounts(
+    List<Map<String, String>> newAccounts, {
+    Function(String email, bool success)? onProgress,
+  }) async {
+    int addedCount = 0;
+
+    for (var acc in newAccounts) {
+      final email = acc[AppKeys.email]!;
+      final password = acc[AppKeys.password]!;
+      final name = acc[AppKeys.name]!;
+
+      try {
+        final authData = await _authRepository.authenticateAccount(
+          email,
+          password,
+        );
+        final idToken = authData[AppKeys.idToken] as String;
+        final localId = authData[AppKeys.localId] as String;
+
+        await _secureStorageService.savePassword(email, password);
+
+        // Fetch capacity
+        final apiClient = Get.find<ApiClient>();
+        final profileDoc = await apiClient.fetchAccountProfile(
+          localId,
+          idToken,
+        );
+        int maxApps = 5;
+        if (profileDoc.containsKey(AppKeys.fields)) {
+          final fields = profileDoc[AppKeys.fields] as Map<String, dynamic>;
+          for (var key in [
+            AppKeys.maxApps,
+            AppKeys.maxAppsLimit,
+            AppKeys.limit,
+            AppKeys.planLimit,
+            AppKeys.appLimit,
+          ]) {
+            if (fields.containsKey(key) &&
+                fields[key].containsKey(AppKeys.integerValue)) {
+              maxApps =
+                  int.tryParse(fields[key][AppKeys.integerValue].toString()) ??
+                  maxApps;
+              break;
+            }
+          }
+        }
+        final appDocs = await apiClient.fetchAppsForAccount(localId, idToken);
+
+        final newAccount = HostAccount(
+          id: 0,
+          accountName: name,
+          email: email,
+          maxAppsLimit: maxApps,
+          appsCount: appDocs.length,
+        );
+
+        final currentAccounts = await _databaseService.getHostAccounts();
+        currentAccounts.add(newAccount);
+        await _databaseService.saveHostAccounts(currentAccounts);
+
+        // Sync to Firestore
+        final syncService = Get.find<FirestoreSyncService>();
+        final secureStorage = Get.find<SecureStorageService>();
+        await syncService.addOrUpdateAccount(newAccount, secureStorage);
+
+        addedCount++;
+        onProgress?.call(email, true);
+      } catch (e) {
+        Get.log('Failed to add $email: $e');
+        onProgress?.call(email, false);
+      }
+    }
+
+    // Refresh memory and dashboard ONLY ONCE at the end!
+    if (addedCount > 0) {
+      await loadAccounts();
+      if (Get.isRegistered<DashboardController>()) {
+        Get.find<DashboardController>().refreshAllAccounts();
+      }
+    }
+
+    return addedCount;
   }
 
   Future<bool> updateAccount(HostAccount oldAccount, String name, String email, String password) async {
@@ -173,11 +263,20 @@ class SettingsController extends GetxController {
         await _databaseService.saveHostAccounts(currentAccounts);
       }
       
-      await loadAccounts();
+      await loadAccounts(showLoading: false);
       
       if (Get.isRegistered<DashboardController>()) {
         Get.find<DashboardController>().refreshAllAccounts();
       }
+
+      // Sync up to Firestore
+      final syncService = Get.find<FirestoreSyncService>();
+      final secureStorage = Get.find<SecureStorageService>();
+      if(oldAccount.email != email) {
+        await syncService.deleteRemoteAccount(oldAccount);
+      }
+      final updatedAccount = accounts.firstWhere((account) => account.email == email);
+      await syncService.addOrUpdateAccount(updatedAccount, secureStorage);
       
       isAddingAccount.value = false;
       return true;
@@ -193,12 +292,16 @@ class SettingsController extends GetxController {
     final currentAccounts = await _databaseService.getHostAccounts();
     currentAccounts.removeWhere((a) => a.id == account.id);
     await _databaseService.saveHostAccounts(currentAccounts);
-    await loadAccounts();
+    await loadAccounts(showLoading: false);
     
     // Refresh dashboard
     if (Get.isRegistered<DashboardController>()) {
       Get.find<DashboardController>().refreshAllAccounts();
     }
+
+    // Sync up to Firestore
+    final syncService = Get.find<FirestoreSyncService>();
+    await syncService.deleteRemoteAccount(account);
   }
 
   Future<String?> getPassword(String email) async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hostdeck/presentation/widgets/filter_bottom_sheet.dart';
+import 'package:hostdeck/presentation/widgets/shimmer_loading.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/constants/app_enums.dart';
 import '../../core/utils/date_utils.dart';
@@ -37,8 +38,8 @@ class DashboardScreen extends GetView<DashboardController> {
             .themeMode
             .value; // Force rebuild on theme change
         final customTheme = Theme.of(context).extension<AppThemeExtension>()!;
-        if (controller.isLoading.value && controller.accounts.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+        if (controller.isInitialLoading.value) {
+          return const DashboardShimmerLoading();
         }
 
         if (!controller.isLoading.value && controller.accounts.isEmpty) {

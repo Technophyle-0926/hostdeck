@@ -20,6 +20,7 @@ class DashboardController extends GetxController {
 
   final RxBool isLoading = true.obs;
   final RxBool isWarningDismissed = false.obs;
+  final RxBool isInitialLoading = true.obs;
   
   StreamSubscription? _subscription;
 
@@ -43,9 +44,11 @@ class DashboardController extends GetxController {
       builds.assignAll(data['builds'] as List<AggregatedBuild>);
       if (data['isFromCache'] == false) {
         isLoading.value = false;
+        isInitialLoading.value = false;
       }
     }, onError: (e) {
       isLoading.value = false;
+      isInitialLoading.value = false;
       Get.log('Dashboard stream error: $e');
     });
   }

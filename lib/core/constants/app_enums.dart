@@ -21,3 +21,28 @@ enum BuildPlatform {
     }
   }
 }
+
+enum ProgressStatus {
+  pending,
+  success,
+  failed;
+
+  static ProgressStatus fromString(String status) {
+    final lowerStatus = status.toLowerCase();
+    if (lowerStatus == 'pending') return ProgressStatus.pending;
+    if (lowerStatus == 'success') return ProgressStatus.success;
+    if (lowerStatus == 'failed') return ProgressStatus.failed;
+    return ProgressStatus.pending;
+  }
+
+  String get displayName {
+    switch (this) {
+      case ProgressStatus.pending:
+        return 'Pending';
+      case ProgressStatus.success:
+        return 'Success';
+      case ProgressStatus.failed:
+        return 'Failed';
+    }
+  }
+}

@@ -1,4 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hostdeck/core/constants/app_constants.dart';
@@ -6,6 +8,7 @@ import 'package:hostdeck/core/constants/app_strings.dart';
 import 'package:hostdeck/data/datasources/remote/firestore_sync_service.dart';
 import 'package:hostdeck/firebase_options.dart';
 import 'package:hostdeck/presentation/controllers/auth_controller.dart';
+import 'package:hostdeck/presentation/controllers/network_controller.dart';
 import 'core/theme/app_theme.dart';
 import 'package:get/get.dart';
 import 'routes/app_pages.dart';
@@ -23,12 +26,21 @@ void main() async {
 
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Pass all uncaught "fatal" errors from the framework to Crashlytics
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
 
   await GoogleSignIn.instance.initialize(
     serverClientId: AppConstants.serverClientId,
   );
 
   // Initialize Global Services
+  Get.put(NetworkController(), permanent: true);
+
   final settingsService = SettingsService();
   await settingsService.init();
   Get.put<SettingsService>(settingsService, permanent: true);

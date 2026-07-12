@@ -22,6 +22,7 @@ class SettingsController extends GetxController {
   final themeMode = 0.obs; // 0=system, 1=light, 2=dark
   final accounts = <HostAccount>[].obs;
   final isAddingAccount = false.obs;
+  final RxBool isLoading = true.obs;
 
   @override
   void onInit() {
@@ -52,8 +53,13 @@ class SettingsController extends GetxController {
     Get.changeThemeMode(mode);
   }
 
-  Future<void> loadAccounts() async {
+  Future<void> loadAccounts({bool showLoading = true}) async {
+    if (showLoading) isLoading.value = true;
     accounts.value = await _databaseService.getHostAccounts();
+    if (showLoading) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      isLoading.value = false;
+    }
   }
 
   Future<bool> addAccount(String name, String email, String password) async {
@@ -103,7 +109,7 @@ class SettingsController extends GetxController {
       currentAccounts.add(newAccount);
       await _databaseService.saveHostAccounts(currentAccounts);
       
-      await loadAccounts();
+      await loadAccounts(showLoading: false);
       
       // Refresh dashboard
       if (Get.isRegistered<DashboardController>()) {
@@ -257,7 +263,7 @@ class SettingsController extends GetxController {
         await _databaseService.saveHostAccounts(currentAccounts);
       }
       
-      await loadAccounts();
+      await loadAccounts(showLoading: false);
       
       if (Get.isRegistered<DashboardController>()) {
         Get.find<DashboardController>().refreshAllAccounts();
@@ -286,7 +292,7 @@ class SettingsController extends GetxController {
     final currentAccounts = await _databaseService.getHostAccounts();
     currentAccounts.removeWhere((a) => a.id == account.id);
     await _databaseService.saveHostAccounts(currentAccounts);
-    await loadAccounts();
+    await loadAccounts(showLoading: false);
     
     // Refresh dashboard
     if (Get.isRegistered<DashboardController>()) {

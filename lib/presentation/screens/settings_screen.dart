@@ -6,6 +6,7 @@ import '../../core/constants/app_strings.dart';
 import '../../core/theme/app_theme.dart';
 import '../controllers/settings_controller.dart';
 import '../widgets/add_account_sheet.dart';
+import '../widgets/shimmer_loading.dart';
 
 class SettingsScreen extends GetView<SettingsController> {
   const SettingsScreen({super.key});
@@ -91,6 +92,9 @@ class SettingsScreen extends GetView<SettingsController> {
             final customTheme = Theme.of(
               context,
             ).extension<AppThemeExtension>()!;
+            if (controller.isLoading.value) {
+              return const SettingsShimmerLoading();
+            }
             if (controller.accounts.isEmpty) {
               return const SliverToBoxAdapter(
                 child: Center(

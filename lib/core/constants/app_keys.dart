@@ -21,4 +21,9 @@ class AppKeys {
   static const String limit = 'limit';
   static const String planLimit = 'plan_limit';
   static const String appLimit = 'app_limit';
+
+  // User Data Fields
+  static const String email = 'email';
+  static const String password = 'password';
+  static const String name = 'name';
 }

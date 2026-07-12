@@ -124,6 +124,90 @@ class SettingsController extends GetxController {
     }
   }
 
+  Future<int> addMultipleAccounts(
+    List<Map<String, String>> newAccounts, {
+    Function(String email, bool success)? onProgress,
+  }) async {
+    int addedCount = 0;
+
+    for (var acc in newAccounts) {
+      final email = acc[AppKeys.email]!;
+      final password = acc[AppKeys.password]!;
+      final name = acc[AppKeys.name]!;
+
+      try {
+        final authData = await _authRepository.authenticateAccount(
+          email,
+          password,
+        );
+        final idToken = authData[AppKeys.idToken] as String;
+        final localId = authData[AppKeys.localId] as String;
+
+        await _secureStorageService.savePassword(email, password);
+
+        // Fetch capacity
+        final apiClient = Get.find<ApiClient>();
+        final profileDoc = await apiClient.fetchAccountProfile(
+          localId,
+          idToken,
+        );
+        int maxApps = 5;
+        if (profileDoc.containsKey(AppKeys.fields)) {
+          final fields = profileDoc[AppKeys.fields] as Map<String, dynamic>;
+          for (var key in [
+            AppKeys.maxApps,
+            AppKeys.maxAppsLimit,
+            AppKeys.limit,
+            AppKeys.planLimit,
+            AppKeys.appLimit,
+          ]) {
+            if (fields.containsKey(key) &&
+                fields[key].containsKey(AppKeys.integerValue)) {
+              maxApps =
+                  int.tryParse(fields[key][AppKeys.integerValue].toString()) ??
+                  maxApps;
+              break;
+            }
+          }
+        }
+        final appDocs = await apiClient.fetchAppsForAccount(localId, idToken);
+
+        final newAccount = HostAccount(
+          id: 0,
+          accountName: name,
+          email: email,
+          maxAppsLimit: maxApps,
+          appsCount: appDocs.length,
+        );
+
+        final currentAccounts = await _databaseService.getHostAccounts();
+        currentAccounts.add(newAccount);
+        await _databaseService.saveHostAccounts(currentAccounts);
+
+        // Sync to Firestore
+        final syncService = Get.find<FirestoreSyncService>();
+        final secureStorage = Get.find<SecureStorageService>();
+        await syncService.addOrUpdateAccount(newAccount, secureStorage);
+
+        addedCount++;
+        onProgress?.call(email, true);
+      } catch (e) {
+        Get.log('Failed to add $email: $e');
+        onProgress?.call(email, false);
+      }
+    }
+
+    // Refresh memory and dashboard ONLY ONCE at the end!
+    if (addedCount > 0) {
+      await loadAccounts();
+      if (Get.isRegistered<DashboardController>()) {
+        Get.find<DashboardController>().refreshAllAccounts();
+      }
+    }
+
+    return addedCount;
+  }
+
   Future<bool> updateAccount(HostAccount oldAccount, String name, String email, String password) async {
     isAddingAccount.value = true;
     try {

@@ -79,5 +79,9 @@
 			</array>
 		</dict>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>We need camera access to scan QR codes</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need photo library access to pick QR code images</string>
 </dict>
 </plist>

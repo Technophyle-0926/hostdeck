@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -5,6 +6,8 @@ import 'package:hostdeck/data/datasources/local/database_service.dart';
 import 'package:hostdeck/data/datasources/local/secure_storage_service.dart';
 import 'package:hostdeck/data/datasources/remote/firestore_sync_service.dart';
 import 'package:hostdeck/data/datasources/remote/google_auth_service.dart';
+import 'package:hostdeck/data/models/app_user_model.dart';
+import 'package:hostdeck/domain/entities/app_user.dart';
 import 'package:hostdeck/presentation/controllers/settings_controller.dart';
 import 'package:hostdeck/routes/app_pages.dart';
 import 'package:hostdeck/core/constants/app_strings.dart';
@@ -13,6 +16,7 @@ class AuthController extends GetxController {
   final GoogleAuthService _googleAuthService = GoogleAuthService();
 
   final Rx<User?> firebaseUser = Rx<User?>(null);
+  final Rxn<AppUser> appUser = Rxn<AppUser>();
   final RxBool isSigningIn = false.obs;
 
   @override
@@ -22,33 +26,65 @@ class AuthController extends GetxController {
     ever(firebaseUser, _setInitialScreen);
   }
 
-  void _setInitialScreen(User? user) {
-    if (isSigningIn.value) return;
-
+  Future<void> _setInitialScreen(User? user) async {
     if (user == null) {
+      appUser.value = null; // Clear state on logout
       if (Get.currentRoute != Routes.login) {
         Get.offAllNamed(Routes.login);
       }
     } else {
-      if (Get.currentRoute != Routes.dashboard) {
-        Get.offAllNamed(Routes.dashboard);
+      var doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      
+      // Handle brand new accounts: Create the document if it doesn't exist yet!
+      if (!doc.exists) {
+        final newUser = AppUserModel()
+          ..uid = user.uid
+          ..email = user.email ?? ''
+          ..displayName = user.displayName ?? ''
+          ..role = UserRole.unassigned.name
+          ..accessibleProjectIds = [];
+          
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set(newUser.toJson());
+        doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      }
+
+      if (doc.exists && doc.data() != null) {
+        appUser.value = AppUserModel.fromJson(doc.data()!).toEntity();
+        
+        if (appUser.value!.role == UserRole.admin) {
+           try {
+             final secureStorage = Get.find<SecureStorageService>();
+             final syncService = Get.find<FirestoreSyncService>();
+             final remoteAccounts = await syncService.syncDown(secureStorage);
+             await Get.find<DatabaseService>().saveHostAccounts(remoteAccounts);
+             if (Get.isRegistered<SettingsController>()) {
+               Get.find<SettingsController>().loadAccounts();
+             }
+           } catch (e) {
+             Get.log('Failed to sync admin accounts: $e');
+           }
+
+           if (Get.currentRoute != Routes.dashboard) {
+             Get.offAllNamed(Routes.dashboard);
+           }
+        } else if (appUser.value!.role == UserRole.unassigned) {
+           Get.offAllNamed(Routes.invite);
+        } else {
+           if (Get.currentRoute != Routes.dashboard) {
+             Get.offAllNamed(Routes.dashboard);
+           }
+        }
       }
     }
   }
+
 
   Future<void> signInWithGoogle() async {
     isSigningIn.value = true;
 
     try {
       final user = await _googleAuthService.signInWithGoogle();
-      if (user != null) {
-        final secureStorage = Get.find<SecureStorageService>();
-        final syncService = Get.find<FirestoreSyncService>();
-        final remoteAccounts = await syncService.syncDown(secureStorage);
-        await Get.find<DatabaseService>().saveHostAccounts(remoteAccounts);
-        Get.find<SettingsController>().loadAccounts();
-        Get.offAllNamed(Routes.dashboard);
-      } else {
+      if (user == null) {
         Get.snackbar(
           AppStrings.signInCancelled,
           AppStrings.signInCancelledDesc,

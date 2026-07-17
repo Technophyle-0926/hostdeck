@@ -18,6 +18,9 @@ class GoogleAuthService {
         credential,
       );
 
+      // AuthController's `_setInitialScreen` will automatically detect the new user, 
+      // create their Firestore document if needed, and route them correctly!
+
       return userCredential.user;
     } catch (e) {
       debugPrint('Google Sign-In Error: $e');
@@ -27,10 +30,12 @@ class GoogleAuthService {
 
   Future<void> signOut() async {
     try {
+      await _googleSignIn.disconnect(); // Forces the account chooser to appear next time
       await _googleSignIn.signOut();
       await _auth.signOut();
     } catch (e) {
       debugPrint('Google Sign-Out Error: $e');
     }
   }
+
 }

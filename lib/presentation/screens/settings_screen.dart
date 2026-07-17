@@ -7,12 +7,16 @@ import '../../core/theme/app_theme.dart';
 import '../controllers/settings_controller.dart';
 import '../widgets/add_account_sheet.dart';
 import '../widgets/shimmer_loading.dart';
+import '../../domain/entities/app_user.dart';
 
 class SettingsScreen extends GetView<SettingsController> {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authUser = Get.find<AuthController>().appUser.value;
+    final bool canManageAccounts = authUser?.role == UserRole.admin;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -21,11 +25,12 @@ class SettingsScreen extends GetView<SettingsController> {
         ),
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.qr_code_scanner),
-            tooltip: 'Scan QR Code',
-            onPressed: () => Get.toNamed(Routes.scanQr),
-          ),
+          if (canManageAccounts)
+            IconButton(
+              icon: const Icon(Icons.qr_code_scanner),
+              tooltip: 'Scan QR Code',
+              onPressed: () => Get.toNamed(Routes.scanQr),
+            ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.redAccent),
             tooltip: AppStrings.logOut,
@@ -34,13 +39,15 @@ class SettingsScreen extends GetView<SettingsController> {
           const SizedBox(width: 8),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => AddAccountSheet.show(context, controller),
-        icon: const Icon(Icons.add),
-        label: const Text(AppStrings.addAccount),
-        backgroundColor: const Color(0xFF2563EB),
-        foregroundColor: Colors.white,
-      ),
+      floatingActionButton: canManageAccounts 
+        ? FloatingActionButton.extended(
+            onPressed: () => AddAccountSheet.show(context, controller),
+            icon: const Icon(Icons.add),
+            label: const Text(AppStrings.addAccount),
+            backgroundColor: const Color(0xFF2563EB),
+            foregroundColor: Colors.white,
+          )
+        : null,
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
@@ -55,120 +62,123 @@ class SettingsScreen extends GetView<SettingsController> {
                   ),
                   const SizedBox(height: 16),
                   _buildThemeSection(context),
-                  const SizedBox(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        AppStrings.manageAccounts,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                  if (canManageAccounts) ...[
+                    const SizedBox(height: 32),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          AppStrings.manageAccounts,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      TextButton.icon(
-                        onPressed: () {
-                          if (controller.accounts.isEmpty) {
-                            Get.snackbar('Notice', 'No accounts to share!');
-                            return;
-                          }
-                          Get.toNamed(
-                            Routes.shareQr,
-                            arguments: controller.accounts,
-                          ); // Pass ALL accounts!
-                        },
-                        icon: const Icon(Icons.qr_code),
-                        label: const Text('Share All'),
-                      ),
-                    ],
-                  ),
+                        TextButton.icon(
+                          onPressed: () {
+                            if (controller.accounts.isEmpty) {
+                              Get.snackbar('Notice', 'No accounts to share!');
+                              return;
+                            }
+                            Get.toNamed(
+                              Routes.shareQr,
+                              arguments: controller.accounts,
+                            ); // Pass ALL accounts!
+                          },
+                          icon: const Icon(Icons.qr_code),
+                          label: const Text('Share All'),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 16),
                 ],
               ),
             ),
           ),
-          Obx(() {
-            controller.themeMode.value; // Force rebuild
-            final customTheme = Theme.of(
-              context,
-            ).extension<AppThemeExtension>()!;
-            if (controller.isLoading.value) {
-              return const SettingsShimmerLoading();
-            }
-            if (controller.accounts.isEmpty) {
-              return const SliverToBoxAdapter(
-                child: Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Text(
-                      AppStrings.noAccountsFound,
-                      style: TextStyle(color: Colors.grey),
+          if (canManageAccounts)
+            Obx(() {
+              controller.themeMode.value; // Force rebuild
+              final customTheme = Theme.of(
+                context,
+              ).extension<AppThemeExtension>()!;
+              if (controller.isLoading.value) {
+                return const SettingsShimmerLoading();
+              }
+              if (controller.accounts.isEmpty) {
+                return const SliverToBoxAdapter(
+                  child: Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Text(
+                        AppStrings.noAccountsFound,
+                        style: TextStyle(color: Colors.grey),
+                      ),
                     ),
                   ),
+                );
+              }
+              return SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final account = controller.accounts[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        leading: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: customTheme.iconBackgroundColor,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.cloud_done,
+                            color: customTheme.primaryIconColor,
+                          ),
+                        ),
+                        title: Text(
+                          account.accountName,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(account.email),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.qr_code),
+                              onPressed: () => Get.toNamed(
+                                Routes.shareQr,
+                                arguments: [account],
+                              ), // Pass just THIS account!
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined),
+                              onPressed: () => AddAccountSheet.show(
+                                context,
+                                controller,
+                                existingAccount: account,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                              ),
+                              onPressed: () => _confirmDelete(context, account),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }, childCount: controller.accounts.length),
                 ),
               );
-            }
-            return SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final account = controller.accounts[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      leading: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: customTheme.iconBackgroundColor,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.cloud_done,
-                          color: customTheme.primaryIconColor,
-                        ),
-                      ),
-                      title: Text(
-                        account.accountName,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(account.email),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.qr_code),
-                            onPressed: () => Get.toNamed(
-                              Routes.shareQr,
-                              arguments: [account],
-                            ), // Pass just THIS account!
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined),
-                            onPressed: () => AddAccountSheet.show(
-                              context,
-                              controller,
-                              existingAccount: account,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.delete_outline,
-                              color: Colors.red,
-                            ),
-                            onPressed: () => _confirmDelete(context, account),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }, childCount: controller.accounts.length),
-              ),
-            );
-          }),
+            }),
           const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
         ],
       ),

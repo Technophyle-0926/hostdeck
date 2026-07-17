@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hostdeck/presentation/controllers/auth_controller.dart';
@@ -7,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../controllers/settings_controller.dart';
 import '../widgets/add_account_sheet.dart';
 import '../widgets/shimmer_loading.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../domain/entities/app_user.dart';
 
 class SettingsScreen extends GetView<SettingsController> {
@@ -31,11 +33,6 @@ class SettingsScreen extends GetView<SettingsController> {
               tooltip: 'Scan QR Code',
               onPressed: () => Get.toNamed(Routes.scanQr),
             ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.redAccent),
-            tooltip: AppStrings.logOut,
-            onPressed: () => Get.find<AuthController>().signOut(),
-          ),
           const SizedBox(width: 8),
         ],
       ),
@@ -48,11 +45,30 @@ class SettingsScreen extends GetView<SettingsController> {
             foregroundColor: Colors.white,
           )
         : null,
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent.withAlpha(40),
+              foregroundColor: Colors.redAccent,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            icon: const Icon(Icons.logout),
+            label: const Text('Log Out', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            onPressed: () => Get.find<AuthController>().signOut(),
+          ),
+        ),
+      ),
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -179,7 +195,50 @@ class SettingsScreen extends GetView<SettingsController> {
                 ),
               );
             }),
-          const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
+          SliverToBoxAdapter(
+            child: FutureBuilder<PackageInfo>(
+              future: PackageInfo.fromPlatform(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const SizedBox();
+                final version = snapshot.data!.version;
+                final buildNumber = snapshot.data!.buildNumber;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16,),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'App Information',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Version'),
+                                  Text(
+                                    kDebugMode ? '$version ($buildNumber)' : version,
+                                    style: const TextStyle(fontWeight: FontWeight.w500),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
         ],
       ),
     );

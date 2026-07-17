@@ -5,6 +5,7 @@ import 'package:hostdeck/core/constants/app_enums.dart';
 import '../../domain/repositories/dashboard_repository.dart';
 import '../../domain/entities/host_account.dart';
 import '../../domain/entities/aggregated_build.dart';
+import 'project_controller.dart';
 
 class DashboardController extends GetxController {
   final DashboardRepository _repository = Get.find<DashboardRepository>();
@@ -17,6 +18,7 @@ class DashboardController extends GetxController {
   final RxString searchQuery = ''.obs;
   final RxList<BuildPlatform> selectedPlatforms = <BuildPlatform>[].obs;
   final RxList<int> selectedHostAccounts = <int>[].obs;
+  final RxList<String> selectedProjects = <String>[].obs;
 
   final RxBool isLoading = true.obs;
   final RxBool isWarningDismissed = false.obs;
@@ -62,6 +64,20 @@ class DashboardController extends GetxController {
     return accounts.where((account) => account.isCapacityCritical()).toList();
   }
 
+  // Get a unique list of available projects based on the currently loaded builds
+  List<Map<String, String>> get availableProjects {
+    final map = <String, String>{};
+    final projectCtrl = Get.put(ProjectController()); // Ensure it exists and track it
+
+    for (var b in builds) {
+      if (b.projectId.isNotEmpty) {
+        final actualProject = projectCtrl.projects.firstWhereOrNull((p) => p.id == b.projectId);
+        map[b.projectId] = actualProject?.name ?? b.projectName;
+      }
+    }
+    return map.entries.map((e) => {'id': e.key, 'name': e.value}).toList();
+  }
+
   // Group builds by project name, sorting the latest to the top
   List<List<AggregatedBuild>> get groupedBuilds {
     final map = <String, List<AggregatedBuild>>{};
@@ -81,6 +97,10 @@ class DashboardController extends GetxController {
       }
 
       if(selectedHostAccounts.isNotEmpty && !selectedHostAccounts.contains(build.hostAccountId)) {
+        continue;
+      }
+
+      if (selectedProjects.isNotEmpty && !selectedProjects.contains(build.projectId)) {
         continue;
       }
 

@@ -10,7 +10,7 @@ class AggregatedBuildModel {
 
   @Index()
   late int hostAccountId;
-  
+  late String projectId;
   late String projectName;
   late String version;
   late String environment;
@@ -26,6 +26,7 @@ class AggregatedBuildModel {
     return AggregatedBuildModel()
       ..id = entity.id == 0 ? Isar.autoIncrement : entity.id
       ..hostAccountId = entity.hostAccountId
+      ..projectId = entity.projectId
       ..projectName = entity.projectName
       ..version = entity.version
       ..environment = entity.environment
@@ -36,18 +37,26 @@ class AggregatedBuildModel {
       ..appIconUrl = entity.appIconUrl;
   }
 
-  factory AggregatedBuildModel.fromFirestoreJson(Map<String, dynamic> json, int hostAccountId, String appName, [String appDownloadUrl = '', String appIconUrl = '']) {
+  factory AggregatedBuildModel.fromFirestoreJson(
+    Map<String, dynamic> json,
+    int hostAccountId,
+    String appName, [
+    String appDownloadUrl = '',
+    String appIconUrl = '',
+  ]) {
     final fields = json[AppKeys.fields] ?? {};
-    
+
     // Helper to safely extract values
     String extractString(String key) {
       return fields[key]?[AppKeys.stringValue] ?? '';
     }
-    
+
     double extractDouble(String key) {
       final field = fields[key];
       if (field == null) return 0.0;
-      if (field.containsKey(AppKeys.doubleValue)) return (field[AppKeys.doubleValue] as num).toDouble();
+      if (field.containsKey(AppKeys.doubleValue)) {
+        return (field[AppKeys.doubleValue] as num).toDouble();
+      }
       if (field.containsKey(AppKeys.integerValue)) {
         return double.tryParse(field[AppKeys.integerValue].toString()) ?? 0.0;
       }
@@ -63,26 +72,65 @@ class AggregatedBuildModel {
 
     return AggregatedBuildModel()
       ..hostAccountId = hostAccountId
+      ..projectId = extractString('projectId')
       ..projectName = appName
       ..version = extractString(AppKeys.version)
-      ..environment = extractString(AppKeys.iosDistributionType).isEmpty 
-          ? 'Prod' 
+      ..environment = extractString(AppKeys.iosDistributionType).isEmpty
+          ? 'Prod'
           : extractString(AppKeys.iosDistributionType)
-      ..uploadDate = DateTime.tryParse(json[AppKeys.createTime] ?? json[AppKeys.updateTime] ?? '') ?? DateTime.now()
+      ..uploadDate =
+          DateTime.tryParse(
+            json[AppKeys.createTime] ?? json[AppKeys.updateTime] ?? '',
+          ) ??
+          DateTime.now()
       ..sizeMb = sizeInMb
       ..platform = extractString(AppKeys.platform)
-      ..downloadUrl = extractString(AppKeys.cachedShareKey).isNotEmpty 
+      ..downloadUrl = extractString(AppKeys.cachedShareKey).isNotEmpty
           ? 'https://appho.st/d/${extractString(AppKeys.cachedShareKey)}'
           : appDownloadUrl
-      ..appIconUrl = extractString(AppKeys.logoUrl).isNotEmpty 
-    ? extractString(AppKeys.logoUrl) 
-    : appIconUrl;
+      ..appIconUrl = extractString(AppKeys.logoUrl).isNotEmpty
+          ? extractString(AppKeys.logoUrl)
+          : appIconUrl;
+  }
+
+  // For parsing from our own Hostdeck Firestore
+  factory AggregatedBuildModel.fromJson(Map<String, dynamic> json) {
+    return AggregatedBuildModel()
+      ..id = json['id'] as int? ?? Isar.autoIncrement
+      ..hostAccountId = json['hostAccountId'] as int? ?? 0
+      ..projectId = json['projectId'] as String? ?? ''
+      ..projectName = json['projectName'] as String? ?? ''
+      ..version = json['version'] as String? ?? ''
+      ..environment = json['environment'] as String? ?? ''
+      ..uploadDate = json['uploadDate'] != null ? DateTime.parse(json['uploadDate']) : DateTime.now()
+      ..sizeMb = (json['sizeMb'] as num?)?.toDouble() ?? 0.0
+      ..platform = json['platform'] as String? ?? ''
+      ..downloadUrl = json['downloadUrl'] as String? ?? ''
+      ..appIconUrl = json['appIconUrl'] as String? ?? '';
+  }
+
+  // For uploading to our own Hostdeck Firestore
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'hostAccountId': hostAccountId,
+      'projectId': projectId,
+      'projectName': projectName,
+      'version': version,
+      'environment': environment,
+      'uploadDate': uploadDate.toIso8601String(),
+      'sizeMb': sizeMb,
+      'platform': platform,
+      'downloadUrl': downloadUrl,
+      'appIconUrl': appIconUrl,
+    };
   }
 
   AggregatedBuild toEntity() {
     return AggregatedBuild(
       id: id,
       hostAccountId: hostAccountId,
+      projectId: projectId,
       projectName: projectName,
       version: version,
       environment: environment,

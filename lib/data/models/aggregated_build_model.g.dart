@@ -43,18 +43,23 @@ const AggregatedBuildModelSchema = CollectionSchema(
       name: r'platform',
       type: IsarType.string,
     ),
-    r'projectName': PropertySchema(
+    r'projectId': PropertySchema(
       id: 5,
+      name: r'projectId',
+      type: IsarType.string,
+    ),
+    r'projectName': PropertySchema(
+      id: 6,
       name: r'projectName',
       type: IsarType.string,
     ),
-    r'sizeMb': PropertySchema(id: 6, name: r'sizeMb', type: IsarType.double),
+    r'sizeMb': PropertySchema(id: 7, name: r'sizeMb', type: IsarType.double),
     r'uploadDate': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'uploadDate',
       type: IsarType.dateTime,
     ),
-    r'version': PropertySchema(id: 8, name: r'version', type: IsarType.string),
+    r'version': PropertySchema(id: 9, name: r'version', type: IsarType.string),
   },
 
   estimateSize: _aggregatedBuildModelEstimateSize,
@@ -96,6 +101,7 @@ int _aggregatedBuildModelEstimateSize(
   bytesCount += 3 + object.downloadUrl.length * 3;
   bytesCount += 3 + object.environment.length * 3;
   bytesCount += 3 + object.platform.length * 3;
+  bytesCount += 3 + object.projectId.length * 3;
   bytesCount += 3 + object.projectName.length * 3;
   bytesCount += 3 + object.version.length * 3;
   return bytesCount;
@@ -112,10 +118,11 @@ void _aggregatedBuildModelSerialize(
   writer.writeString(offsets[2], object.environment);
   writer.writeLong(offsets[3], object.hostAccountId);
   writer.writeString(offsets[4], object.platform);
-  writer.writeString(offsets[5], object.projectName);
-  writer.writeDouble(offsets[6], object.sizeMb);
-  writer.writeDateTime(offsets[7], object.uploadDate);
-  writer.writeString(offsets[8], object.version);
+  writer.writeString(offsets[5], object.projectId);
+  writer.writeString(offsets[6], object.projectName);
+  writer.writeDouble(offsets[7], object.sizeMb);
+  writer.writeDateTime(offsets[8], object.uploadDate);
+  writer.writeString(offsets[9], object.version);
 }
 
 AggregatedBuildModel _aggregatedBuildModelDeserialize(
@@ -131,10 +138,11 @@ AggregatedBuildModel _aggregatedBuildModelDeserialize(
   object.hostAccountId = reader.readLong(offsets[3]);
   object.id = id;
   object.platform = reader.readString(offsets[4]);
-  object.projectName = reader.readString(offsets[5]);
-  object.sizeMb = reader.readDouble(offsets[6]);
-  object.uploadDate = reader.readDateTime(offsets[7]);
-  object.version = reader.readString(offsets[8]);
+  object.projectId = reader.readString(offsets[5]);
+  object.projectName = reader.readString(offsets[6]);
+  object.sizeMb = reader.readDouble(offsets[7]);
+  object.uploadDate = reader.readDateTime(offsets[8]);
+  object.version = reader.readString(offsets[9]);
   return object;
 }
 
@@ -158,10 +166,12 @@ P _aggregatedBuildModelDeserializeProp<P>(
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 7:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 8:
+      return (reader.readDateTime(offset)) as P;
+    case 9:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1256,6 +1266,187 @@ extension AggregatedBuildModelQueryFilter
     AggregatedBuildModel,
     QAfterFilterCondition
   >
+  projectIdEqualTo(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'projectId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AggregatedBuildModel,
+    AggregatedBuildModel,
+    QAfterFilterCondition
+  >
+  projectIdGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'projectId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AggregatedBuildModel,
+    AggregatedBuildModel,
+    QAfterFilterCondition
+  >
+  projectIdLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'projectId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AggregatedBuildModel,
+    AggregatedBuildModel,
+    QAfterFilterCondition
+  >
+  projectIdBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'projectId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AggregatedBuildModel,
+    AggregatedBuildModel,
+    QAfterFilterCondition
+  >
+  projectIdStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'projectId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AggregatedBuildModel,
+    AggregatedBuildModel,
+    QAfterFilterCondition
+  >
+  projectIdEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'projectId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AggregatedBuildModel,
+    AggregatedBuildModel,
+    QAfterFilterCondition
+  >
+  projectIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'projectId',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AggregatedBuildModel,
+    AggregatedBuildModel,
+    QAfterFilterCondition
+  >
+  projectIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'projectId',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AggregatedBuildModel,
+    AggregatedBuildModel,
+    QAfterFilterCondition
+  >
+  projectIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'projectId', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AggregatedBuildModel,
+    AggregatedBuildModel,
+    QAfterFilterCondition
+  >
+  projectIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'projectId', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<
+    AggregatedBuildModel,
+    AggregatedBuildModel,
+    QAfterFilterCondition
+  >
   projectNameEqualTo(String value, {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -1865,6 +2056,20 @@ extension AggregatedBuildModelQuerySortBy
   }
 
   QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QAfterSortBy>
+  sortByProjectId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'projectId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QAfterSortBy>
+  sortByProjectIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'projectId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QAfterSortBy>
   sortByProjectName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'projectName', Sort.asc);
@@ -2008,6 +2213,20 @@ extension AggregatedBuildModelQuerySortThenBy
   }
 
   QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QAfterSortBy>
+  thenByProjectId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'projectId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QAfterSortBy>
+  thenByProjectIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'projectId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QAfterSortBy>
   thenByProjectName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'projectName', Sort.asc);
@@ -2102,6 +2321,13 @@ extension AggregatedBuildModelQueryWhereDistinct
   }
 
   QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QDistinct>
+  distinctByProjectId({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'projectId', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, AggregatedBuildModel, QDistinct>
   distinctByProjectName({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'projectName', caseSensitive: caseSensitive);
@@ -2175,6 +2401,13 @@ extension AggregatedBuildModelQueryProperty
   platformProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'platform');
+    });
+  }
+
+  QueryBuilder<AggregatedBuildModel, String, QQueryOperations>
+  projectIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'projectId');
     });
   }
 

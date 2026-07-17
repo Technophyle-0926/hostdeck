@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hostdeck/presentation/controllers/auth_controller.dart';
+import 'package:hostdeck/domain/entities/app_user.dart';
 import 'package:hostdeck/presentation/widgets/filter_bottom_sheet.dart';
 import 'package:hostdeck/presentation/widgets/shimmer_loading.dart';
 import '../../core/constants/app_strings.dart';
@@ -42,8 +44,25 @@ class DashboardScreen extends GetView<DashboardController> {
           return const DashboardShimmerLoading();
         }
 
-        if (!controller.isLoading.value && controller.accounts.isEmpty) {
-          return _buildEmptyState(context, customTheme);
+        final isAdmin = Get.find<AuthController>().appUser.value?.role == UserRole.admin;
+
+        if (!controller.isLoading.value) {
+          if (isAdmin && controller.accounts.isEmpty) {
+            return _buildEmptyState(context, customTheme);
+          } else if (!isAdmin && controller.groupedBuilds.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.folder_off, size: 64, color: Colors.grey.withValues(alpha: 0.5)),
+                  const SizedBox(height: 16),
+                  const Text('No builds assigned yet', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                  const SizedBox(height: 8),
+                  const Text('An admin needs to assign projects to your account.', style: TextStyle(color: Colors.grey)),
+                ],
+              ),
+            );
+          }
         }
 
         return RefreshIndicator(
@@ -62,8 +81,10 @@ class DashboardScreen extends GetView<DashboardController> {
                     _buildSearchBar(context),
                     _buildWarningBanner(customTheme),
                     const SizedBox(height: 16),
-                    _buildAccountOverviews(customTheme),
-                    const SizedBox(height: 24),
+                    if (isAdmin) ...[
+                      _buildAccountOverviews(customTheme),
+                      const SizedBox(height: 24),
+                    ],
                     const Text(
                       AppStrings.aggregatedBuilds,
                       style: TextStyle(

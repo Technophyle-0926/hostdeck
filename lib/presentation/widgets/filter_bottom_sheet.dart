@@ -8,6 +8,7 @@ class FilterBottomSheet {
   static void show(BuildContext context, DashboardController controller) {
     final localPlatforms = <BuildPlatform>[...controller.selectedPlatforms].obs;
     final localAccounts = <int>[...controller.selectedHostAccounts].obs;
+    final localProjects = <String>[...controller.selectedProjects].obs;
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(24),
@@ -30,6 +31,7 @@ class FilterBottomSheet {
                   onPressed: () {
                     localPlatforms.clear();
                     localAccounts.clear();
+                    localProjects.clear();
                   },
                   child: const Text(
                     AppStrings.clearAll,
@@ -63,33 +65,60 @@ class FilterBottomSheet {
                 }).toList(),
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
-              AppStrings.accounts,
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Obx(
-              () => Wrap(
-                spacing: 8,
-                children: controller.accounts.map((account) {
-                  final isSelected = localAccounts.contains(
-                    account.id,
-                  );
-                  return FilterChip(
-                    label: Text(account.accountName),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      if (selected) {
-                        localAccounts.add(account.id);
-                      } else {
-                        localAccounts.remove(account.id);
-                      }
-                    },
-                  );
-                }).toList(),
+            if (controller.accounts.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              const Text(
+                AppStrings.accounts,
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-            ),
+              const SizedBox(height: 8),
+              Obx(
+                () => Wrap(
+                  spacing: 8,
+                  children: controller.accounts.map((account) {
+                    final isSelected = localAccounts.contains(account.id);
+                    return FilterChip(
+                      label: Text(account.accountName),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          localAccounts.add(account.id);
+                        } else {
+                          localAccounts.remove(account.id);
+                        }
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+            if (controller.availableProjects.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              const Text(
+                'Projects',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Obx(
+                () => Wrap(
+                  spacing: 8,
+                  children: controller.availableProjects.map((project) {
+                    final isSelected = localProjects.contains(project['id']);
+                    return FilterChip(
+                      label: Text(project['name']!),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          localProjects.add(project['id']!);
+                        } else {
+                          localProjects.remove(project['id']);
+                        }
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
@@ -97,6 +126,7 @@ class FilterBottomSheet {
                 onPressed: () {
                   controller.selectedPlatforms.assignAll(localPlatforms);
                   controller.selectedHostAccounts.assignAll(localAccounts);
+                  controller.selectedProjects.assignAll(localProjects);
                   Get.back();
                 },
                 child: const Text(AppStrings.apply),

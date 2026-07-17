@@ -1,6 +1,7 @@
 class AggregatedBuild {
   final int id;
   final int hostAccountId;
+  final String projectId;
   final String projectName;
   final String version;
   final String environment;
@@ -13,6 +14,7 @@ class AggregatedBuild {
   AggregatedBuild({
     required this.id,
     required this.hostAccountId,
+    required this.projectId,
     required this.projectName,
     required this.version,
     required this.environment,
@@ -22,4 +24,32 @@ class AggregatedBuild {
     required this.downloadUrl,
     this.appIconUrl = '',
   });
+
+  AggregatedBuild copyWith({
+    int? id,
+    int? hostAccountId,
+    String? projectId,
+    String? projectName,
+    String? version,
+    String? environment,
+    DateTime? uploadDate,
+    double? sizeMb,
+    String? platform,
+    String? downloadUrl,
+    String? appIconUrl,
+  }) {
+    return AggregatedBuild(
+      id: id ?? this.id,
+      hostAccountId: hostAccountId ?? this.hostAccountId,
+      projectId: projectId ?? this.projectId,
+      projectName: projectName ?? this.projectName,
+      version: version ?? this.version,
+      environment: environment ?? this.environment,
+      uploadDate: uploadDate ?? this.uploadDate,
+      sizeMb: sizeMb ?? this.sizeMb,
+      platform: platform ?? this.platform,
+      downloadUrl: downloadUrl ?? this.downloadUrl,
+      appIconUrl: appIconUrl ?? this.appIconUrl,
+    );
+  }
 }

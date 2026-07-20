@@ -1,5 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
+import 'package:hostdeck/data/datasources/local/database_service.dart';
+import 'package:hostdeck/data/datasources/local/encryption_service.dart';
+import 'package:hostdeck/data/datasources/local/secure_storage_service.dart';
+import 'package:hostdeck/presentation/controllers/auth_controller.dart';
 import 'package:hostdeck/domain/entities/app_user.dart';
 import 'package:hostdeck/data/models/app_user_model.dart';
 import 'dart:math';
@@ -8,7 +12,8 @@ class UserController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
   final RxList<AppUser> users = <AppUser>[].obs;
-  final RxBool isLoading = false.obs;
+  final RxBool isLoading = true.obs;
+  final RxString transferStatus = ''.obs;
 
   @override
   void onInit() {
@@ -44,7 +49,19 @@ class UserController extends GetxController {
 
   Future<void> removeUser(String uid) async {
     try {
-      await _firestore.collection('users').doc(uid).delete();
+      final batch = _firestore.batch();
+      
+      // 1. Delete all host_accounts subcollection documents to avoid orphaned data
+      final accountsSnapshot = await _firestore.collection('users').doc(uid).collection('host_accounts').get();
+      for (var doc in accountsSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      
+      // 2. Delete the main user document
+      batch.delete(_firestore.collection('users').doc(uid));
+      
+      await batch.commit();
+
       fetchUsers(); // refresh
       Get.snackbar('Success', 'User has been removed from the system.');
     } catch (e) {
@@ -61,6 +78,52 @@ class UserController extends GetxController {
       Get.snackbar('Success', 'User projects updated.');
     } catch (e) {
       Get.snackbar('Error', 'Failed to update user projects: $e');
+    }
+  }
+
+  Future<void> transferAccountsAndRemoveSelf(String targetAdminUid) async {
+    final authController = Get.find<AuthController>();
+    final currentUid = authController.firebaseUser.value?.uid;
+    if (currentUid == null) return;
+
+    try {
+      transferStatus.value = 'Preparing to transfer accounts...';
+      
+      final dbService = Get.find<DatabaseService>();
+      final secureStorage = Get.find<SecureStorageService>();
+      final encryptionService = EncryptionService();
+      
+      final accounts = await dbService.getHostAccounts();
+      final batch = _firestore.batch();
+      final targetCollection = _firestore.collection('users').doc(targetAdminUid).collection('host_accounts');
+
+      int count = 0;
+      for (var account in accounts) {
+        transferStatus.value = 'Encrypting account ${++count}/${accounts.length}...';
+        final password = await secureStorage.getPassword(account.email);
+        if (password != null) {
+          final encryptedPassword = encryptionService.encrypt(password, targetUid: targetAdminUid);
+          batch.set(targetCollection.doc(account.email), {
+            'accountName': account.accountName,
+            'email': account.email,
+            'encryptedPassword': encryptedPassword,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+      }
+
+      transferStatus.value = 'Transferring accounts to new Admin...';
+      await batch.commit();
+
+      transferStatus.value = 'Cleaning up old data...';
+      await removeUser(currentUid); // This already cleans up the old subcollection and document
+      
+      transferStatus.value = 'Logging out...';
+      await authController.signOut();
+
+    } catch (e) {
+      Get.snackbar('Transfer Error', 'Failed to transfer accounts: $e');
+      transferStatus.value = '';
     }
   }
 

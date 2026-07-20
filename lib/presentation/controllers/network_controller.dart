@@ -40,16 +40,16 @@ class NetworkController extends GetxController {
           'You are offline. Please check your connection.',
           style: TextStyle(color: Colors.white, fontSize: 14),
         ),
-        isDismissible: false,
+        isDismissible: true, // Allow user to dismiss if it blocks UI
         duration: const Duration(
           days: 999,
-        ), // Stay open indefinitely until online
+        ), // Stay open indefinitely until online or dismissed
         backgroundColor: Colors.red[800]!,
         icon: const Icon(Icons.wifi_off, color: Colors.white, size: 24),
-        margin: EdgeInsets.zero,
-        snackPosition:
-            SnackPosition.TOP, // Top looks like a native system alert
-        snackStyle: SnackStyle.GROUNDED,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        snackPosition: SnackPosition.BOTTOM, 
+        snackStyle: SnackStyle.FLOATING,
       );
     } else {
       if (_hasLostConnection) {
@@ -69,9 +69,10 @@ class NetworkController extends GetxController {
           duration: const Duration(seconds: 3),
           backgroundColor: Colors.green[700]!,
           icon: const Icon(Icons.wifi, color: Colors.white, size: 24),
-          margin: EdgeInsets.zero,
-          snackPosition: SnackPosition.TOP,
-          snackStyle: SnackStyle.GROUNDED,
+          margin: const EdgeInsets.all(16),
+          borderRadius: 12,
+          snackPosition: SnackPosition.BOTTOM,
+          snackStyle: SnackStyle.FLOATING,
         );
       }
     }

@@ -13,6 +13,7 @@ class UserManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentUserId = Get.find<AuthController>().firebaseUser.value?.uid;
     final role = Get.find<AuthController>().appUser.value?.role;
     final isAdmin = role == UserRole.admin;
     final isManager = role == UserRole.manager;
@@ -109,12 +110,14 @@ class UserManagementScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Projects: ${user.accessibleProjectIds.length}',
+                          user.role == UserRole.admin 
+                              ? 'Projects: All Access' 
+                              : 'Projects: ${user.accessibleProjectIds.length}',
                           style: const TextStyle(fontSize: 13, color: Colors.grey),
                         ),
                         Row(
                           children: [
-                            if (isAdmin || isManager)
+                            if ((isAdmin || isManager) && user.role != UserRole.admin)
                               IconButton(
                                 icon: const Icon(Icons.folder_shared, size: 20),
                                 tooltip: 'Edit Projects',
@@ -124,49 +127,54 @@ class UserManagementScreen extends StatelessWidget {
                               ),
                             if ((assignableRoles.contains(user.role) || user.role == UserRole.unassigned) && assignableRoles.isNotEmpty) ...[
                               const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.grey.withAlpha(76)),
+                              if (user.uid != currentUserId) // Prevent changing own role
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.grey.withAlpha(76)),
+                                  ),
+                                  child: DropdownButton<UserRole>(
+                                    value: assignableRoles.contains(user.role) ? user.role : UserRole.unassigned,
+                                    iconSize: 20,
+                                    underline: const SizedBox(),
+                                    style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color),
+                                    items: [
+                                      if (!assignableRoles.contains(user.role) && user.role == UserRole.unassigned)
+                                        const DropdownMenuItem(value: UserRole.unassigned, child: Text('UNASSIGNED')),
+                                      ...assignableRoles.map((r) => DropdownMenuItem(
+                                            value: r,
+                                            child: Text(r.toString().split('.').last.toUpperCase()),
+                                          ))
+                                    ],
+                                    onChanged: (newRole) {
+                                      if (newRole != null && newRole != user.role && newRole != UserRole.unassigned) {
+                                        controller.updateRole(user.uid, newRole);
+                                      }
+                                    },
+                                  ),
                                 ),
-                                child: DropdownButton<UserRole>(
-                                  value: assignableRoles.contains(user.role) ? user.role : UserRole.unassigned,
-                                  iconSize: 20,
-                                  underline: const SizedBox(),
-                                  style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color),
-                                  items: [
-                                    if (!assignableRoles.contains(user.role) && user.role == UserRole.unassigned)
-                                      const DropdownMenuItem(value: UserRole.unassigned, child: Text('UNASSIGNED')),
-                                    ...assignableRoles.map((r) => DropdownMenuItem(
-                                          value: r,
-                                          child: Text(r.toString().split('.').last.toUpperCase()),
-                                        ))
-                                  ],
-                                  onChanged: (newRole) {
-                                    if (newRole != null && newRole != user.role && newRole != UserRole.unassigned) {
-                                      controller.updateRole(user.uid, newRole);
-                                    }
-                                  },
-                                ),
-                              ),
                               const SizedBox(width: 8),
                               IconButton(
                                 icon: const Icon(Icons.person_remove, color: Colors.red, size: 20),
-                                tooltip: 'Remove User',
+                                tooltip: user.uid == currentUserId ? 'Leave Hostdeck' : 'Remove User',
                                 onPressed: () {
-                                  Get.defaultDialog(
-                                    title: 'Remove User',
-                                    middleText: 'Are you sure you want to completely remove ${user.displayName.isNotEmpty ? user.displayName : 'this user'}? They will lose all access.',
-                                    textCancel: 'Cancel',
-                                    textConfirm: 'Remove',
-                                    confirmTextColor: Colors.white,
-                                    buttonColor: Colors.red,
-                                    onConfirm: () {
-                                      Get.back();
-                                      controller.removeUser(user.uid);
-                                    },
-                                  );
+                                  if (user.uid == currentUserId) {
+                                    _showSelfRemovalDialog(context, controller, currentUserId!);
+                                  } else {
+                                    Get.defaultDialog(
+                                      title: 'Remove User',
+                                      middleText: 'Are you sure you want to completely remove ${user.displayName.isNotEmpty ? user.displayName : 'this user'}? They will lose all access.',
+                                      textCancel: 'Cancel',
+                                      textConfirm: 'Remove',
+                                      confirmTextColor: Colors.white,
+                                      buttonColor: Colors.red,
+                                      onConfirm: () {
+                                        Get.back();
+                                        controller.removeUser(user.uid);
+                                      },
+                                    );
+                                  }
                                 },
                                 constraints: const BoxConstraints(),
                                 padding: const EdgeInsets.all(8),
@@ -340,6 +348,103 @@ class UserManagementScreen extends StatelessWidget {
           ElevatedButton(onPressed: () => Get.back(), child: const Text('Done')),
         ],
       )
+    );
+  }
+
+  void _showSelfRemovalDialog(BuildContext context, UserController controller, String currentUserId) {
+    final otherAdmins = controller.users.where((u) => u.role == UserRole.admin && u.uid != currentUserId).toList();
+
+    if (otherAdmins.isEmpty) {
+      Get.defaultDialog(
+        title: 'Cannot Leave',
+        middleText: 'You are the only Admin in the system. You must promote someone else to Admin before you can transfer your accounts and leave.',
+        textConfirm: 'Okay',
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+      );
+      return;
+    }
+
+    String selectedTargetUid = otherAdmins.first.uid;
+
+    Get.defaultDialog(
+      title: 'Leave Hostdeck',
+      barrierDismissible: false,
+      content: StatefulBuilder(
+        builder: (context, setState) {
+          return Obx(() {
+            if (controller.transferStatus.value.isNotEmpty) {
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(
+                      controller.transferStatus.value,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text('To remove yourself, you must transfer your encrypted AppHost accounts to another Admin.'),
+                  const SizedBox(height: 16),
+                  const Text('Select Target Admin:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedTargetUid,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    items: otherAdmins.map((admin) {
+                      return DropdownMenuItem(
+                        value: admin.uid,
+                        child: Text(admin.displayName.isNotEmpty ? admin.displayName : admin.email),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => selectedTargetUid = val);
+                    },
+                  ),
+                ],
+              ),
+            );
+          });
+        },
+      ),
+      actions: [
+        Obx(() {
+          if (controller.transferStatus.value.isNotEmpty) return const SizedBox();
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+                onPressed: () {
+                  controller.transferAccountsAndRemoveSelf(selectedTargetUid);
+                },
+                child: const Text('Transfer & Leave'),
+              ),
+            ],
+          );
+        }),
+      ],
     );
   }
 }

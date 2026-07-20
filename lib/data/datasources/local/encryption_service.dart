@@ -6,16 +6,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 
 class EncryptionService {
-  Key _getKey() {
-    final user = FirebaseAuth.instance.currentUser;
-    if(user == null) throw Exception("User not logged in");
-    final bytes = utf8.encode(user.uid);
+  Key _getKey([String? targetUid]) {
+    final uid = targetUid ?? FirebaseAuth.instance.currentUser?.uid;
+    if(uid == null) throw Exception("User not logged in and no target UID provided");
+    final bytes = utf8.encode(uid);
     final digest = sha256.convert(bytes);
     return Key(Uint8List.fromList(digest.bytes));
   }
 
-  String encrypt(String plainText) {
-    final key = _getKey();
+  String encrypt(String plainText, {String? targetUid}) {
+    final key = _getKey(targetUid);
     final iv = IV.fromLength(16);
     final encrypter = Encrypter(AES(key, mode: AESMode.cbc));
     final encrypted = encrypter.encrypt(plainText, iv: iv);

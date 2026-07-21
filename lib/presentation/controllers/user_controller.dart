@@ -6,6 +6,8 @@ import 'package:hostdeck/data/datasources/local/secure_storage_service.dart';
 import 'package:hostdeck/presentation/controllers/auth_controller.dart';
 import 'package:hostdeck/domain/entities/app_user.dart';
 import 'package:hostdeck/data/models/app_user_model.dart';
+import 'package:hostdeck/core/constants/app_constants.dart';
+import 'package:hostdeck/core/constants/app_keys.dart';
 
 class UserController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -23,7 +25,7 @@ class UserController extends GetxController {
   Future<void> fetchUsers() async {
     isLoading.value = true;
     try {
-      final snapshot = await _firestore.collection('users').get();
+      final snapshot = await _firestore.collection(FirestoreCollections.users).get();
       users.value = snapshot.docs.map((doc) {
         return AppUserModel.fromJson(doc.data()).toEntity();
       }).toList();
@@ -36,8 +38,8 @@ class UserController extends GetxController {
 
   Future<void> updateRole(String uid, UserRole newRole) async {
     try {
-      await _firestore.collection('users').doc(uid).update({
-        'role': newRole.toString().split('.').last,
+      await _firestore.collection(FirestoreCollections.users).doc(uid).update({
+        AppKeys.role: newRole.name,
       });
       fetchUsers(); // refresh
       Get.snackbar('Success', 'User role updated.');
@@ -52,16 +54,16 @@ class UserController extends GetxController {
 
       // 1. Delete all host_accounts subcollection documents to avoid orphaned data
       final accountsSnapshot = await _firestore
-          .collection('users')
+          .collection(FirestoreCollections.users)
           .doc(uid)
-          .collection('host_accounts')
+          .collection(FirestoreCollections.hostAccounts)
           .get();
       for (var doc in accountsSnapshot.docs) {
         batch.delete(doc.reference);
       }
 
       // 2. Delete the main user document
-      batch.delete(_firestore.collection('users').doc(uid));
+      batch.delete(_firestore.collection(FirestoreCollections.users).doc(uid));
 
       await batch.commit();
 
@@ -74,8 +76,8 @@ class UserController extends GetxController {
 
   Future<void> updateUserProjects(String uid, List<String> projectIds) async {
     try {
-      await _firestore.collection('users').doc(uid).update({
-        'accessibleProjectIds': projectIds,
+      await _firestore.collection(FirestoreCollections.users).doc(uid).update({
+        AppKeys.accessibleProjectIds: projectIds,
       });
       fetchUsers(); // refresh
       Get.snackbar('Success', 'User projects updated.');
@@ -99,9 +101,9 @@ class UserController extends GetxController {
       final accounts = await dbService.getHostAccounts();
       final batch = _firestore.batch();
       final targetCollection = _firestore
-          .collection('users')
+          .collection(FirestoreCollections.users)
           .doc(targetAdminUid)
-          .collection('host_accounts');
+          .collection(FirestoreCollections.hostAccounts);
 
       int count = 0;
       for (var account in accounts) {
@@ -114,10 +116,10 @@ class UserController extends GetxController {
             targetUid: targetAdminUid,
           );
           batch.set(targetCollection.doc(account.email), {
-            'accountName': account.accountName,
-            'email': account.email,
-            'encryptedPassword': encryptedPassword,
-            'updatedAt': FieldValue.serverTimestamp(),
+            AppKeys.accountName: account.accountName,
+            AppKeys.email: account.email,
+            AppKeys.encryptedPassword: encryptedPassword,
+            AppKeys.updatedAt: FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
         }
       }
@@ -143,11 +145,11 @@ class UserController extends GetxController {
       final authController = Get.find<AuthController>();
       final currentUserEmail = authController.firebaseUser.value?.email;
 
-      await _firestore.collection('pre_authorized_users').doc(email.toLowerCase()).set({
-        'role': role.toString().split('.').last,
-        'accessibleProjectIds': projectIds,
-        'addedBy': currentUserEmail,
-        'createdAt': FieldValue.serverTimestamp(),
+      await _firestore.collection(FirestoreCollections.preAuthorizedUsers).doc(email.toLowerCase()).set({
+        AppKeys.role: role.name,
+        AppKeys.accessibleProjectIds: projectIds,
+        AppKeys.addedBy: currentUserEmail,
+        AppKeys.createdAt: FieldValue.serverTimestamp(),
       });
 
       Get.snackbar('Success', '$email has been authorized successfully!');

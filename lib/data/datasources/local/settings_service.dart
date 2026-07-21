@@ -1,9 +1,9 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/constants/app_constants.dart';
 
 class SettingsService {
   late SharedPreferences _prefs;
   
-  static const String _themeModeKey = 'theme_mode';
   static const int _defaultThemeMode = 0; // 0 = System, 1 = Light, 2 = Dark
 
   Future<void> init() async {
@@ -11,10 +11,10 @@ class SettingsService {
   }
 
   int getThemeMode() {
-    return _prefs.getInt(_themeModeKey) ?? _defaultThemeMode;
+    return _prefs.getInt(PrefsKeys.themeMode) ?? _defaultThemeMode;
   }
 
   Future<void> setThemeMode(int value) async {
-    await _prefs.setInt(_themeModeKey, value);
+    await _prefs.setInt(PrefsKeys.themeMode, value);
   }
 }

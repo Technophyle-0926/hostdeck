@@ -1,5 +1,6 @@
 import 'package:isar_community/isar.dart';
 import '../../domain/entities/app_user.dart';
+import '../../core/constants/app_keys.dart';
 
 part 'app_user_model.g.dart';
 
@@ -28,23 +29,23 @@ class AppUserModel {
   // Factory to parse Firestore JSON into our Model
   factory AppUserModel.fromJson(Map<String, dynamic> json) {
     return AppUserModel()
-      ..uid = json['uid'] ?? ''
-      ..email = json['email'] ?? ''
-      ..displayName = json['displayName'] ?? ''
-      ..role = json['role'] ?? 'client'
+      ..uid = json[AppKeys.uid] ?? ''
+      ..email = json[AppKeys.email] ?? ''
+      ..displayName = json[AppKeys.displayName] ?? ''
+      ..role = json[AppKeys.role] ?? UserRole.client.name
       ..accessibleProjectIds = List<String>.from(
-        json['accessibleProjectIds'] ?? [],
+        json[AppKeys.accessibleProjectIds] ?? [],
       );
   }
 
   // Convert Model to Firestore JSON
   Map<String, dynamic> toJson() {
     return {
-      'uid': uid,
-      'email': email,
-      'displayName': displayName,
-      'role': role,
-      'accessibleProjectIds': accessibleProjectIds,
+      AppKeys.uid: uid,
+      AppKeys.email: email,
+      AppKeys.displayName: displayName,
+      AppKeys.role: role,
+      AppKeys.accessibleProjectIds: accessibleProjectIds,
     };
   }
 

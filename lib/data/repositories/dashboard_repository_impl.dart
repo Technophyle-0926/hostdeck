@@ -3,6 +3,7 @@ import 'package:hostdeck/presentation/controllers/auth_controller.dart';
 import 'package:collection/collection.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/repositories/dashboard_repository.dart';
+import '../../core/constants/app_constants.dart';
 import '../../domain/repositories/auth_repository.dart';
 import 'package:hostdeck/data/models/aggregated_build_model.dart';
 import 'package:hostdeck/data/models/project_model.dart';
@@ -50,7 +51,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
       }
 
       try {
-        final snapshot = await firestore.collection('builds')
+        final snapshot = await firestore.collection(FirestoreCollections.builds)
             .where('projectId', whereIn: currentUser.accessibleProjectIds)
             .get();
           
@@ -238,7 +239,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
       final firestore = FirebaseFirestore.instance;
       
       // Fetch all projects to map builds to their respective projects
-      final projectsSnapshot = await firestore.collection('projects').get();
+      final projectsSnapshot = await firestore.collection(FirestoreCollections.projects).get();
       // Sort projects by appName length descending so more specific matches apply first
       // e.g. "Sentry Admin" matches before "Sentry"
       final List<Project> allProjects = projectsSnapshot.docs
@@ -247,7 +248,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
           ..sort((a, b) => b.appName.length.compareTo(a.appName.length));
 
       final batch = firestore.batch();
-      final buildsCollection = firestore.collection('builds');
+      final buildsCollection = firestore.collection(FirestoreCollections.builds);
 
       for (int i = 0; i < remoteBuilds.length; i++) {
         var build = remoteBuilds[i];

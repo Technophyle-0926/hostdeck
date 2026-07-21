@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import 'package:hostdeck/domain/entities/project.dart';
 import 'package:hostdeck/data/models/project_model.dart';
+import 'package:hostdeck/core/constants/app_constants.dart';
+import 'package:hostdeck/core/constants/app_keys.dart';
 import 'package:hostdeck/presentation/controllers/auth_controller.dart';
 import 'package:hostdeck/domain/entities/app_user.dart';
 
@@ -27,7 +29,7 @@ class ProjectController extends GetxController {
       }
 
       if (user.role == UserRole.admin) {
-        final snapshot = await _firestore.collection('projects').orderBy('createdAt', descending: true).get();
+        final snapshot = await _firestore.collection(FirestoreCollections.projects).orderBy(AppKeys.createdAt, descending: true).get();
         projects.value = snapshot.docs.map((doc) {
           return ProjectModel.fromJson(doc.data(), doc.id).toEntity();
         }).toList();
@@ -48,7 +50,7 @@ class ProjectController extends GetxController {
 
         final allProjects = <Project>[];
         for (var chunk in chunks) {
-          final snapshot = await _firestore.collection('projects')
+          final snapshot = await _firestore.collection(FirestoreCollections.projects)
               .where(FieldPath.documentId, whereIn: chunk)
               .get();
           allProjects.addAll(snapshot.docs.map((doc) {
@@ -73,7 +75,7 @@ class ProjectController extends GetxController {
     }
 
     try {
-      final newDoc = _firestore.collection('projects').doc();
+      final newDoc = _firestore.collection(FirestoreCollections.projects).doc();
       final projectModel = ProjectModel()
         ..projectId = newDoc.id
         ..name = name

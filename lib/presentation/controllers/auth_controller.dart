@@ -11,6 +11,8 @@ import 'package:hostdeck/domain/entities/app_user.dart';
 import 'package:hostdeck/presentation/controllers/settings_controller.dart';
 import 'package:hostdeck/routes/app_pages.dart';
 import 'package:hostdeck/core/constants/app_strings.dart';
+import 'package:hostdeck/core/constants/app_constants.dart';
+import 'package:hostdeck/core/constants/app_keys.dart';
 
 class AuthController extends GetxController {
   final GoogleAuthService _googleAuthService = GoogleAuthService();
@@ -34,7 +36,7 @@ class AuthController extends GetxController {
       }
     } else {
       var doc = await FirebaseFirestore.instance
-          .collection('users')
+          .collection(FirestoreCollections.users)
           .doc(user.uid)
           .get();
 
@@ -42,7 +44,7 @@ class AuthController extends GetxController {
       if (!doc.exists) {
         // 1. Check if the user is pre-authorized by an Admin
         final authDoc = await FirebaseFirestore.instance
-            .collection('pre_authorized_users')
+            .collection(FirestoreCollections.preAuthorizedUsers)
             .doc(user.email?.toLowerCase())
             .get();
 
@@ -52,11 +54,11 @@ class AuthController extends GetxController {
             ..uid = user.uid
             ..email = user.email ?? ''
             ..displayName = user.displayName ?? ''
-            ..role = data['role'] ?? 'client'
-            ..accessibleProjectIds = List<String>.from(data['accessibleProjectIds'] ?? []);
+            ..role = data[AppKeys.role] ?? UserRole.client.name
+            ..accessibleProjectIds = List<String>.from(data[AppKeys.accessibleProjectIds] ?? []);
             
-          await FirebaseFirestore.instance.collection('users').doc(user.uid).set(newUser.toJson());
-          doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+          await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(user.uid).set(newUser.toJson());
+          doc = await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(user.uid).get();
         } else {
           // User is NOT authorized. Block them and log them out.
           await signOut();

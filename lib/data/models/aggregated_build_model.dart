@@ -96,33 +96,33 @@ class AggregatedBuildModel {
   // For parsing from our own Hostdeck Firestore
   factory AggregatedBuildModel.fromJson(Map<String, dynamic> json) {
     return AggregatedBuildModel()
-      ..id = json['id'] as int? ?? Isar.autoIncrement
-      ..hostAccountId = json['hostAccountId'] as int? ?? 0
-      ..projectId = json['projectId'] as String? ?? ''
-      ..projectName = json['projectName'] as String? ?? ''
-      ..version = json['version'] as String? ?? ''
-      ..environment = json['environment'] as String? ?? ''
-      ..uploadDate = json['uploadDate'] != null ? DateTime.parse(json['uploadDate']) : DateTime.now()
-      ..sizeMb = (json['sizeMb'] as num?)?.toDouble() ?? 0.0
-      ..platform = json['platform'] as String? ?? ''
-      ..downloadUrl = json['downloadUrl'] as String? ?? ''
-      ..appIconUrl = json['appIconUrl'] as String? ?? '';
+      ..id = json[AppKeys.id] as int? ?? Isar.autoIncrement
+      ..hostAccountId = json[AppKeys.hostAccountId] as int? ?? 0
+      ..projectId = json[AppKeys.projectId] as String? ?? ''
+      ..projectName = json[AppKeys.projectName] as String? ?? ''
+      ..version = json[AppKeys.version] as String? ?? ''
+      ..environment = json[AppKeys.environment] as String? ?? ''
+      ..uploadDate = json[AppKeys.uploadDate] != null ? DateTime.parse(json[AppKeys.uploadDate]) : DateTime.now()
+      ..sizeMb = (json[AppKeys.sizeMb] as num?)?.toDouble() ?? 0.0
+      ..platform = json[AppKeys.platform] as String? ?? ''
+      ..downloadUrl = json[AppKeys.downloadUrl] as String? ?? ''
+      ..appIconUrl = json[AppKeys.appIconUrl] as String? ?? '';
   }
 
   // For uploading to our own Hostdeck Firestore
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'hostAccountId': hostAccountId,
-      'projectId': projectId,
-      'projectName': projectName,
-      'version': version,
-      'environment': environment,
-      'uploadDate': uploadDate.toIso8601String(),
-      'sizeMb': sizeMb,
-      'platform': platform,
-      'downloadUrl': downloadUrl,
-      'appIconUrl': appIconUrl,
+      AppKeys.id: id,
+      AppKeys.hostAccountId: hostAccountId,
+      AppKeys.projectId: projectId,
+      AppKeys.projectName: projectName,
+      AppKeys.version: version,
+      AppKeys.environment: environment,
+      AppKeys.uploadDate: uploadDate.toIso8601String(),
+      AppKeys.sizeMb: sizeMb,
+      AppKeys.platform: platform,
+      AppKeys.downloadUrl: downloadUrl,
+      AppKeys.appIconUrl: appIconUrl,
     };
   }
 

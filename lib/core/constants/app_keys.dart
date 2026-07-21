@@ -26,4 +26,25 @@ class AppKeys {
   static const String email = 'email';
   static const String password = 'password';
   static const String name = 'name';
+  static const String uid = 'uid';
+  static const String id = 'id';
+  static const String role = 'role';
+  static const String accessibleProjectIds = 'accessibleProjectIds';
+  static const String addedBy = 'addedBy';
+  static const String createdAt = 'createdAt';
+  static const String updatedAt = 'updatedAt';
+  static const String accountName = 'accountName';
+  static const String encryptedPassword = 'encryptedPassword';
+  static const String projectName = 'projectName';
+  static const String appName = 'appName';
+  static const String projectId = 'projectId';
+  static const String hostAccountId = 'hostAccountId';
+  static const String environment = 'environment';
+  static const String sizeMb = 'sizeMb';
+  static const String downloadUrl = 'downloadUrl';
+  static const String appIconUrl = 'appIconUrl';
+  static const String appsCount = 'appsCount';
+  static const String displayName = 'displayName';
+  static const String description = 'description';
+  static const String uploadDate = 'uploadDate';
 }

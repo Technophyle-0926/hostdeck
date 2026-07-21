@@ -38,8 +38,8 @@ class UserManagementScreen extends StatelessWidget {
           if (assignableRoles.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.person_add),
-              onPressed: () => _showGenerateInviteDialog(context, assignableRoles),
-              tooltip: 'Generate Invite Code',
+              onPressed: () => _showPreAuthorizeDialog(context, assignableRoles),
+              tooltip: 'Pre-authorize User',
             ),
         ],
       ),
@@ -50,8 +50,8 @@ class UserManagementScreen extends StatelessWidget {
         
         final visibleUsers = controller.users.where((user) {
           if (isAdmin) return true;
-          if (isManager) return user.role == UserRole.tester || user.role == UserRole.client || user.role == UserRole.unassigned;
-          if (isTester) return user.role == UserRole.client || user.role == UserRole.unassigned;
+          if (isManager) return user.role == UserRole.tester || user.role == UserRole.client;
+          if (isTester) return user.role == UserRole.client;
           return false;
         }).toList();
 
@@ -125,7 +125,7 @@ class UserManagementScreen extends StatelessWidget {
                                 constraints: const BoxConstraints(),
                                 padding: const EdgeInsets.all(8),
                               ),
-                            if ((assignableRoles.contains(user.role) || user.role == UserRole.unassigned) && assignableRoles.isNotEmpty) ...[
+                            if (assignableRoles.contains(user.role) && assignableRoles.isNotEmpty) ...[
                               const SizedBox(width: 8),
                               if (user.uid != currentUserId) // Prevent changing own role
                                 Container(
@@ -135,20 +135,16 @@ class UserManagementScreen extends StatelessWidget {
                                     border: Border.all(color: Colors.grey.withAlpha(76)),
                                   ),
                                   child: DropdownButton<UserRole>(
-                                    value: assignableRoles.contains(user.role) ? user.role : UserRole.unassigned,
+                                    value: user.role,
                                     iconSize: 20,
                                     underline: const SizedBox(),
                                     style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color),
-                                    items: [
-                                      if (!assignableRoles.contains(user.role) && user.role == UserRole.unassigned)
-                                        const DropdownMenuItem(value: UserRole.unassigned, child: Text('UNASSIGNED')),
-                                      ...assignableRoles.map((r) => DropdownMenuItem(
-                                            value: r,
-                                            child: Text(r.toString().split('.').last.toUpperCase()),
-                                          ))
-                                    ],
+                                    items: assignableRoles.map((r) => DropdownMenuItem(
+                                      value: r,
+                                      child: Text(r.toString().split('.').last.toUpperCase()),
+                                    )).toList(),
                                     onChanged: (newRole) {
-                                      if (newRole != null && newRole != user.role && newRole != UserRole.unassigned) {
+                                      if (newRole != null && newRole != user.role) {
                                         controller.updateRole(user.uid, newRole);
                                       }
                                     },
@@ -170,7 +166,7 @@ class UserManagementScreen extends StatelessWidget {
                                       confirmTextColor: Colors.white,
                                       buttonColor: Colors.red,
                                       onConfirm: () {
-                                        Get.back();
+                                        Navigator.of(context).pop();
                                         controller.removeUser(user.uid);
                                       },
                                     );
@@ -235,10 +231,10 @@ class UserManagementScreen extends StatelessWidget {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
               ElevatedButton(
                 onPressed: () {
-                  Get.back(); // close dialog
+                  Navigator.of(context).pop(); // close dialog
                   controller.updateUserProjects(user.uid, selectedProjectIds);
                 },
                 child: const Text('Save'),
@@ -250,21 +246,32 @@ class UserManagementScreen extends StatelessWidget {
     );
   }
 
-  void _showGenerateInviteDialog(BuildContext context, List<UserRole> assignableRoles) {
+  void _showPreAuthorizeDialog(BuildContext context, List<UserRole> assignableRoles) {
     final projectCtrl = Get.find<ProjectController>();
     UserRole selectedRole = assignableRoles.isNotEmpty ? assignableRoles.first : UserRole.client;
     List<String> selectedProjectIds = [];
+    final emailController = TextEditingController();
 
     Get.dialog(
       StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: const Text('Generate Invite Code'),
+            title: const Text('Pre-authorize User'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Text('Email Address:'),
+                  TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(
+                      hintText: 'user@example.com',
+                      isDense: true,
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 16),
                   const Text('Role:'),
                   DropdownButton<UserRole>(
                     isExpanded: true,
@@ -303,51 +310,23 @@ class UserManagementScreen extends StatelessWidget {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
               ElevatedButton(
                 onPressed: () async {
-                  Get.back(); // close dialog
-                  final code = await controller.generateInvite(selectedRole, selectedProjectIds);
-                  if (code != null) {
-                    _showCodeDialog(code);
+                  final email = emailController.text.trim();
+                  if (email.isEmpty) {
+                    Get.snackbar('Error', 'Please enter an email address');
+                    return;
                   }
+                  Navigator.of(context).pop(); // close dialog
+                  await controller.preAuthorizeUser(email, selectedRole, selectedProjectIds);
                 },
-                child: const Text('Generate'),
+                child: const Text('Authorize'),
               )
             ],
           );
         },
       ),
-    );
-  }
-
-  void _showCodeDialog(String code) {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Invite Code Generated!'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Share this code with the user. They will enter it upon logging in.', textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            SelectableText(
-              code, 
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 2)
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: code));
-              Get.snackbar('Copied', 'Invite code copied to clipboard');
-              Get.back();
-            },
-            child: const Text('Copy to Clipboard'),
-          ),
-          ElevatedButton(onPressed: () => Get.back(), child: const Text('Done')),
-        ],
-      )
     );
   }
 
@@ -360,7 +339,7 @@ class UserManagementScreen extends StatelessWidget {
         middleText: 'You are the only Admin in the system. You must promote someone else to Admin before you can transfer your accounts and leave.',
         textConfirm: 'Okay',
         confirmTextColor: Colors.white,
-        onConfirm: () => Get.back(),
+        onConfirm: () => Navigator.of(context).pop(),
       );
       return;
     }
@@ -431,7 +410,7 @@ class UserManagementScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () => Get.back(),
+                onPressed: () => Navigator.of(context).pop(),
                 child: const Text('Cancel'),
               ),
               ElevatedButton(

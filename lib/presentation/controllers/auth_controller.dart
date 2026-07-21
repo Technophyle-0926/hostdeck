@@ -33,42 +33,64 @@ class AuthController extends GetxController {
         Get.offAllNamed(Routes.login);
       }
     } else {
-      var doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      
+      var doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
       // Handle brand new accounts: Create the document if it doesn't exist yet!
       if (!doc.exists) {
-        final newUser = AppUserModel()
-          ..uid = user.uid
-          ..email = user.email ?? ''
-          ..displayName = user.displayName ?? ''
-          ..role = UserRole.unassigned.name
-          ..accessibleProjectIds = [];
-          
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set(newUser.toJson());
-        doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        // 1. Check if the user is pre-authorized by an Admin
+        final authDoc = await FirebaseFirestore.instance
+            .collection('pre_authorized_users')
+            .doc(user.email?.toLowerCase())
+            .get();
+
+        if (authDoc.exists && authDoc.data() != null) {
+          final data = authDoc.data()!;
+          final newUser = AppUserModel()
+            ..uid = user.uid
+            ..email = user.email ?? ''
+            ..displayName = user.displayName ?? ''
+            ..role = data['role'] ?? 'client'
+            ..accessibleProjectIds = List<String>.from(data['accessibleProjectIds'] ?? []);
+            
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).set(newUser.toJson());
+          doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        } else {
+          // User is NOT authorized. Block them and log them out.
+          await signOut();
+          Get.snackbar(
+            'Access Denied', 
+            'Your email address is not authorized. Please ask an Admin for access.',
+            backgroundColor: Colors.redAccent,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 5),
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          return;
+        }
       }
 
       if (doc.exists && doc.data() != null) {
         appUser.value = AppUserModel.fromJson(doc.data()!).toEntity();
-        
+
         if (appUser.value!.role == UserRole.admin) {
-           try {
-             final secureStorage = Get.find<SecureStorageService>();
-             final syncService = Get.find<FirestoreSyncService>();
-             final remoteAccounts = await syncService.syncDown(secureStorage);
-             await Get.find<DatabaseService>().saveHostAccounts(remoteAccounts);
-             if (Get.isRegistered<SettingsController>()) {
-               Get.find<SettingsController>().loadAccounts();
-             }
-           } catch (e) {
-             Get.log('Failed to sync admin accounts: $e');
-           }
+          try {
+            final secureStorage = Get.find<SecureStorageService>();
+            final syncService = Get.find<FirestoreSyncService>();
+            final remoteAccounts = await syncService.syncDown(secureStorage);
+            await Get.find<DatabaseService>().saveHostAccounts(remoteAccounts);
+            if (Get.isRegistered<SettingsController>()) {
+              Get.find<SettingsController>().loadAccounts();
+            }
+          } catch (e) {
+            Get.log('Failed to sync admin accounts: $e');
+          }
 
            if (Get.currentRoute != Routes.dashboard) {
              Get.offAllNamed(Routes.dashboard);
            }
-        } else if (appUser.value!.role == UserRole.unassigned) {
-           Get.offAllNamed(Routes.invite);
         } else {
            if (Get.currentRoute != Routes.dashboard) {
              Get.offAllNamed(Routes.dashboard);
@@ -77,7 +99,6 @@ class AuthController extends GetxController {
       }
     }
   }
-
 
   Future<void> signInWithGoogle() async {
     isSigningIn.value = true;

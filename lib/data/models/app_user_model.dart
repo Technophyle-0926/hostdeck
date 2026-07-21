@@ -31,7 +31,7 @@ class AppUserModel {
       ..uid = json['uid'] ?? ''
       ..email = json['email'] ?? ''
       ..displayName = json['displayName'] ?? ''
-      ..role = json['role'] ?? 'unassigned'
+      ..role = json['role'] ?? 'client'
       ..accessibleProjectIds = List<String>.from(
         json['accessibleProjectIds'] ?? [],
       );

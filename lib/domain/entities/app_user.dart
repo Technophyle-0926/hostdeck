@@ -2,8 +2,7 @@ enum UserRole {
   admin,
   manager,
   tester,
-  client,
-  unassigned;
+  client;
 
   static UserRole fromString(String role) {
     switch (role.toLowerCase()) {
@@ -16,7 +15,7 @@ enum UserRole {
       case 'client':
         return UserRole.client;
       default:
-        return UserRole.unassigned;
+        return UserRole.client;
     }
   }
 }

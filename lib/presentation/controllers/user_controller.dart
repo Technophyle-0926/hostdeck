@@ -6,11 +6,10 @@ import 'package:hostdeck/data/datasources/local/secure_storage_service.dart';
 import 'package:hostdeck/presentation/controllers/auth_controller.dart';
 import 'package:hostdeck/domain/entities/app_user.dart';
 import 'package:hostdeck/data/models/app_user_model.dart';
-import 'dart:math';
 
 class UserController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   final RxList<AppUser> users = <AppUser>[].obs;
   final RxBool isLoading = true.obs;
   final RxString transferStatus = ''.obs;
@@ -50,16 +49,20 @@ class UserController extends GetxController {
   Future<void> removeUser(String uid) async {
     try {
       final batch = _firestore.batch();
-      
+
       // 1. Delete all host_accounts subcollection documents to avoid orphaned data
-      final accountsSnapshot = await _firestore.collection('users').doc(uid).collection('host_accounts').get();
+      final accountsSnapshot = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('host_accounts')
+          .get();
       for (var doc in accountsSnapshot.docs) {
         batch.delete(doc.reference);
       }
-      
+
       // 2. Delete the main user document
       batch.delete(_firestore.collection('users').doc(uid));
-      
+
       await batch.commit();
 
       fetchUsers(); // refresh
@@ -88,21 +91,28 @@ class UserController extends GetxController {
 
     try {
       transferStatus.value = 'Preparing to transfer accounts...';
-      
+
       final dbService = Get.find<DatabaseService>();
       final secureStorage = Get.find<SecureStorageService>();
       final encryptionService = EncryptionService();
-      
+
       final accounts = await dbService.getHostAccounts();
       final batch = _firestore.batch();
-      final targetCollection = _firestore.collection('users').doc(targetAdminUid).collection('host_accounts');
+      final targetCollection = _firestore
+          .collection('users')
+          .doc(targetAdminUid)
+          .collection('host_accounts');
 
       int count = 0;
       for (var account in accounts) {
-        transferStatus.value = 'Encrypting account ${++count}/${accounts.length}...';
+        transferStatus.value =
+            'Encrypting account ${++count}/${accounts.length}...';
         final password = await secureStorage.getPassword(account.email);
         if (password != null) {
-          final encryptedPassword = encryptionService.encrypt(password, targetUid: targetAdminUid);
+          final encryptedPassword = encryptionService.encrypt(
+            password,
+            targetUid: targetAdminUid,
+          );
           batch.set(targetCollection.doc(account.email), {
             'accountName': account.accountName,
             'email': account.email,
@@ -116,34 +126,33 @@ class UserController extends GetxController {
       await batch.commit();
 
       transferStatus.value = 'Cleaning up old data...';
-      await removeUser(currentUid); // This already cleans up the old subcollection and document
-      
+      await removeUser(
+        currentUid,
+      ); // This already cleans up the old subcollection and document
+
       transferStatus.value = 'Logging out...';
       await authController.signOut();
-
     } catch (e) {
       Get.snackbar('Transfer Error', 'Failed to transfer accounts: $e');
       transferStatus.value = '';
     }
   }
 
-  Future<String?> generateInvite(UserRole role, List<String> projectIds) async {
+  Future<void> preAuthorizeUser(String email, UserRole role, List<String> projectIds) async {
     try {
-      // Generate a short 6 character invite code
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      final rnd = Random();
-      final code = 'HD-${String.fromCharCodes(Iterable.generate(5, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))))}';
+      final authController = Get.find<AuthController>();
+      final currentUserEmail = authController.firebaseUser.value?.email;
 
-      await _firestore.collection('invitations').doc(code).set({
+      await _firestore.collection('pre_authorized_users').doc(email.toLowerCase()).set({
         'role': role.toString().split('.').last,
         'accessibleProjectIds': projectIds,
+        'addedBy': currentUserEmail,
         'createdAt': FieldValue.serverTimestamp(),
       });
-      
-      return code;
+
+      Get.snackbar('Success', '$email has been authorized successfully!');
     } catch (e) {
-      Get.snackbar('Error', 'Failed to generate invite: $e');
-      return null;
+      Get.snackbar('Error', 'Failed to authorize user: $e');
     }
   }
 }
